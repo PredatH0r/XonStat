@@ -1167,11 +1167,11 @@ def players_elo(request, b_rating = False):
     deactivated = {}
     untracked = set()
     playerinfo = {}
-    gametypes = ['ffa','ca','tdm','ctf','ft']
+    gametypes = ['duel', 'ffa','ca','tdm','ctf','ft', 'ad']
     for steamid in steamids:
         players[steamid] = {"steamid": steamid }
-        # default privacy for unknown players, players with privacy_match_hist=0 (not set) and =3 (anonymous) is "anonymous"
-        playerinfo[steamid] = { "privacy": "anonymous", "allowRating": True, "deactivated": False, "ratings": {} } 
+        # default privacy for unknown players, players with privacy_match_hist=0 (not set) and =3 (anonymous) is "private"
+        playerinfo[steamid] = { "privacy": "private", "allowRating": True, "deactivated": False, "ratings": {} } 
         for gt in gametypes:
             players[steamid][gt] = defaultRating
 
