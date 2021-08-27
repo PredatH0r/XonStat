@@ -113,7 +113,7 @@ Advanced Search
           <th style="width:100px;">Player ID</th>
           <th>Nick</th>
           <th class="create-dt" style="width:180px;">Joined</th>
-          <!--th style="width:60px;">Games</th>-->
+          <!-- <th style="width:60px;">Games</th> -->
         </tr>
       </thead>
       <tbody>
