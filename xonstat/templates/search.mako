@@ -113,7 +113,6 @@ Advanced Search
           <th style="width:100px;">Player ID</th>
           <th>Nick</th>
           <th class="create-dt" style="width:180px;">Joined</th>
-          <!-- <th style="width:60px;">Games</th> -->
         </tr>
       </thead>
       <tbody>
@@ -122,13 +121,6 @@ Advanced Search
           <td>${player_id}</td>
           <td class="player-nick"><a href="${request.route_path("player_info", id=player_id)}" title="Go to this player's info page">${html_colors(nick)|n}</a></td>
           <td><span class="abstime" data-epoch="${int((create_dt - datetime.datetime(1970,1,1)).total_seconds())}">${create_dt.strftime('%Y-%m-%d')}</span></td>
-          <!--
-          <td class="tdcenter">
-            <a href="${request.route_path("player_game_index", player_id=player_id, page=1)}" title="View recent games by this player">
-              <i class="glyphicon glyphicon-list"></i>
-            </a>
-          </td>
-          -->
         </tr>
         % endfor
       </tbody>
