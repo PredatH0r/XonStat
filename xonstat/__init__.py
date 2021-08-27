@@ -93,8 +93,8 @@ def main(global_config, **settings):
     config.add_view(submit_stats, route_name="submit_stats", renderer="jsonp")
 
     # PLAYER ROUTES
-    config.add_route("player_game_index",      "/player/{player_id:\d+}/games")
-    config.add_view(player_game_index,      route_name="player_game_index",      renderer="player_game_index.mako")
+    #config.add_route("player_game_index",      "/player/{player_id:\d+}/games")
+    #config.add_view(player_game_index,      route_name="player_game_index",      renderer="player_game_index.mako")
 
     config.add_route("player_game_index_json", "/player/{player_id:\d+}/games.json")
     config.add_view(player_game_index_json, route_name="player_game_index_json", renderer="jsonp")
@@ -136,26 +136,26 @@ def main(global_config, **settings):
     config.add_route("player_elo_info_json", "/player/{hashkey}/elo.json")
     config.add_view(player_elo_info_json, route_name="player_elo_info_json", renderer="jsonp")
 
-    config.add_route("player_accuracy",      "/player/{id:\d+}/accuracy")
-    config.add_view(player_accuracy_json, route_name="player_accuracy",      renderer="jsonp")
+    #config.add_route("player_accuracy",      "/player/{id:\d+}/accuracy")
+    #config.add_view(player_accuracy_json, route_name="player_accuracy",      renderer="jsonp")
 
     config.add_route("player_index",      "/players")
     config.add_view(player_index,      route_name="player_index",      renderer="player_index.mako")
 
-    config.add_route("player_index_json", "/players.json")
-    config.add_view(player_index_json, route_name="player_index_json", renderer="jsonp")
+    #config.add_route("player_index_json", "/players.json")
+    #config.add_view(player_index_json, route_name="player_index_json", renderer="jsonp")
 
-    config.add_route("player_captimes",      "/player/{player_id:\d+}/captimes")
-    config.add_view(player_captimes,      route_name="player_captimes",      renderer="player_captimes.mako")
+    #config.add_route("player_captimes",      "/player/{player_id:\d+}/captimes")
+    #config.add_view(player_captimes,      route_name="player_captimes",      renderer="player_captimes.mako")
 
-    config.add_route("player_captimes_json", "/player/{player_id:\d+}/captimes.json")
-    config.add_view(player_captimes_json, route_name="player_captimes_json", renderer="jsonp")
+    #config.add_route("player_captimes_json", "/player/{player_id:\d+}/captimes.json")
+    #config.add_view(player_captimes_json, route_name="player_captimes_json", renderer="jsonp")
 
-    config.add_route("player_weaponstats_data_json", "/player/{id:\d+}/weaponstats.json")
-    config.add_view(player_weaponstats_data_json, route_name="player_weaponstats_data_json", renderer="jsonp")
+    #config.add_route("player_weaponstats_data_json", "/player/{id:\d+}/weaponstats.json")
+    #config.add_view(player_weaponstats_data_json, route_name="player_weaponstats_data_json", renderer="jsonp")
 
-    config.add_route("top_players_by_time", "/topactive")
-    config.add_view(top_players_by_time, route_name="top_players_by_time", renderer="top_players_by_time.mako")
+    #config.add_route("top_players_by_time", "/topactive")
+    #config.add_view(top_players_by_time, route_name="top_players_by_time", renderer="top_players_by_time.mako")
 
     config.add_route("top_servers_by_players", "/topservers")
     config.add_view(top_servers_by_players, route_name="top_servers_by_players", renderer="top_servers_by_players.mako")
