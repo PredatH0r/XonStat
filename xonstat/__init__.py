@@ -99,11 +99,20 @@ def main(global_config, **settings):
     config.add_route("player_info_json", "/player/{id:\d+}.json")
     config.add_view(player_info_json, route_name="player_info_json", renderer="jsonp")
 
+    config.add_route("player_captimes",      "/player/{player_id:\d+}/captimes")
+    config.add_view(player_captimes,      route_name="player_captimes",      renderer="player_captimes.mako")
+
+    config.add_route("player_weaponstats_data_json", "/player/{id:\d+}/weaponstats.json")
+    config.add_view(player_weaponstats_data_json, route_name="player_weaponstats_data_json", renderer="jsonp")
+
+    config.add_route("player_recent_games_json", "/player/{id:\d+}/recent_games.json");
+    config.add_view(player_recent_games_json, route_name="player_recent_games_json", renderer="jsonp");
+
     config.add_route("player_game_index",      "/player/{player_id:\d+}/games")
     config.add_view(player_game_index,      route_name="player_game_index",      renderer="player_game_index.mako")
 
-    config.add_route("player_game_index_json", "/player/{player_id:\d+}/games.json")
-    config.add_view(player_game_index_json, route_name="player_game_index_json", renderer="jsonp")
+    #config.add_route("player_game_index_json", "/player/{player_id:\d+}/games.json")
+    #config.add_view(player_game_index_json, route_name="player_game_index_json", renderer="jsonp")
 
     #config.add_route("player_hashkey_info_text", "/player/me")
     #config.add_view(player_hashkey_info_text, route_name="player_hashkey_info_text", renderer="player_hashkey_info_text.mako")
@@ -128,9 +137,6 @@ def main(global_config, **settings):
     config.add_route("players_aliases_text", "/aliases/{hashkeys}");
     config.add_view(players_aliases_text, route_name="players_aliases_text", renderer="players_aliases_text.mako")
 
-    #config.add_route("player_recent_games_json", "/player/{id:\d+}/recent_games.json");
-    #config.add_view(player_recent_games_json, route_name="player_recent_games_json", renderer="jsonp");
-
 
     # FIXME - needs an additional method to convert to JSON
     #config.add_route("player_elo_info_json", "/player/{hashkey}/elo.json")
@@ -145,14 +151,8 @@ def main(global_config, **settings):
     #config.add_route("player_index_json", "/players.json")
     #config.add_view(player_index_json, route_name="player_index_json", renderer="jsonp")
 
-    config.add_route("player_captimes",      "/player/{player_id:\d+}/captimes")
-    config.add_view(player_captimes,      route_name="player_captimes",      renderer="player_captimes.mako")
-
     #config.add_route("player_captimes_json", "/player/{player_id:\d+}/captimes.json")
     #config.add_view(player_captimes_json, route_name="player_captimes_json", renderer="jsonp")
-
-    config.add_route("player_weaponstats_data_json", "/player/{id:\d+}/weaponstats.json")
-    config.add_view(player_weaponstats_data_json, route_name="player_weaponstats_data_json", renderer="jsonp")
 
     #config.add_route("top_players_by_time", "/topactive")
     #config.add_view(top_players_by_time, route_name="top_players_by_time", renderer="top_players_by_time.mako")
