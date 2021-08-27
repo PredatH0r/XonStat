@@ -93,11 +93,11 @@ def main(global_config, **settings):
     config.add_view(submit_stats, route_name="submit_stats", renderer="jsonp")
 
     # PLAYER ROUTES
-    #config.add_route("player_game_index",      "/player/{player_id:\d+}/games")
-    #config.add_view(player_game_index,      route_name="player_game_index",      renderer="player_game_index.mako")
+    config.add_route("player_game_index",      "/player/{player_id:\d+}/games")
+    config.add_view(player_game_index,      route_name="player_game_index",      renderer="player_game_index.mako")
 
-    config.add_route("player_game_index_json", "/player/{player_id:\d+}/games.json")
-    config.add_view(player_game_index_json, route_name="player_game_index_json", renderer="jsonp")
+    #config.add_route("player_game_index_json", "/player/{player_id:\d+}/games.json")
+    #config.add_view(player_game_index_json, route_name="player_game_index_json", renderer="jsonp")
 
     config.add_route("player_info",      "/player/{id:\d+}")
     config.add_view(player_info,      route_name="player_info",      renderer="player_info.mako")
