@@ -417,6 +417,22 @@ def player_recent_games_json(request):
     player_id = int(request.matchdict["id"])
     limit = request.params.get("limit", 20)
     game_type_cd = request.params.get("game_type_cd")
+
+    # check for if profile is public or the authenticated user's own profile
+    player = DBSession.query(Player).filter_by(player_id=player_id).one()
+    if player.privacy_match_hist == 2:
+        pass
+    elif player.privacy_match_hist == 1:
+        row = DBSession.query(Hashkey).\
+            filter_by(player_id=player_id).\
+            first()
+        sessioncookie = unquote(request.cookies.get("SteamAuthSession", ""))
+        may_see_stats = row.sessionkey == sessioncookie
+        if not may_see_stats:
+            raise pyramid.httpexceptions.HTTPUnauthorized
+    else:
+        raise pyramid.httpexceptions.HTTPUnauthorized
+
     return get_recent_games(player_id, limit=limit, game_type_cd=game_type_cd)
 
 
@@ -631,6 +647,20 @@ def player_game_index_data(request):
         player = DBSession.query(Player).\
                 filter_by(player_id=player_id).\
                 one()
+
+        if player.privacy_match_hist == 2:
+            pass
+        elif player.privacy_match_hist == 1:
+            row = DBSession.query(Hashkey).\
+                filter_by(player_id=player_id).\
+                first()
+            sessioncookie = unquote(request.cookies.get("SteamAuthSession", ""))
+            may_see_stats = row.sessionkey == sessioncookie
+            if not may_see_stats:
+                raise pyramid.httpexceptions.HTTPUnauthorized
+        else:
+            raise pyramid.httpexceptions.HTTPUnauthorized
+
 
         rgs_q = recent_games_q(player_id=player.player_id,
             force_player_id=True, game_type_cd=game_type_cd)
