@@ -1,7 +1,7 @@
 ﻿var
   log4js = require("log4js"),
   request = require("request"),
-  gsq = require("game-server-query"),
+  gsq = require("gamedig"),
   Q = require("q"),
   dns = require("dns"),
   gr = require("./gamerating"),
@@ -563,18 +563,22 @@ function getServerBrowserInfo(gameAddr) {
   
   var def = Q.defer();
   _logger.debug("getting server browser information for " + gameAddr);
-  gsq({ type: "synergy", host: host, port: gamePort, localPort: _config.httpd.port }, function(state) { def.resolve(state); });
+  //gsq({ type: "synergy", host: host, port: gamePort, localPort: _config.httpd.port }, function(state) { def.resolve(state); });
   
   return cached.updatePromise = 
-    def.promise
+    //def.promise
+    gsq.query({type:'quakelive', host: host, port: gamePort, requestRules: true })
     .then(function(state) {
-      _logger.debug("received server browser information for " + gameAddr + ": state.error=" + state.error + ", map=" + ((state.raw||{}).rules||{}).mapname);
-      if (!state.error && state.raw && state.raw.rules) {
+      _logger.debug("received server browser information for " + gameAddr + ": map=" + state.map);
+      if (state.raw && state.raw.rules) {
         var gt = (GameTypes[parseInt(state.raw.rules.g_gametype)] || "").toLowerCase();
         var factory = (state.raw.rules.g_factory || gt).toLowerCase();
         return _getServerBrowserInfoCache[gameAddr] = { time: Date.now(), gt: gt, factory: factory, raw: state.raw };
       }
       return cached;
+    })
+    .catch(error => {
+      _logger.debug("received server browser information for " + gameAddr + ": error=" + error);
     })
     .finally(function() {
       cached.updatePromise = null;
