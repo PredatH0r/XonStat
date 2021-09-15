@@ -13,25 +13,25 @@
     "url": "https://github.com/PredatH0r/XonStat.git"
   },
   "dependencies": {
-    "body-parser": ">= 1.14.1",
-    "cookie-parser": "1.4.3" ,
-    "ejs":  ">= 2.5.1" ,
-    "events": ">= 1.1.0",
-    "express": ">= 4.13.3",
-    "express-session": "^1.14.2",
-    "game-server-query": ">= 1.0.0",
-    "graceful-fs": ">= 3.0.0",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "1.4.3",
+    "ejs": "^3.1.6",
+    "events": "^3.3.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "gamedig": ">= 2.0.25",
+    "graceful-fs": "^4.2.8",
     "log4js": "^0.6.22",
-    "node-gyp": ">= 3.0.0",
-    "passport": ">= 0.3.2",
-    "passport-steam": ">= 1.0.5",
+    "node-gyp": "^8.2.0",
+    "passport": "^0.4.1",
+    "passport-steam": "^1.0.15",
     "pg": "6.4",
     "q": "1.2.0",
-    "request": ">= 2.53.0",
+    "request": "^2.88.2",
     "semver": "^4.3.2",
-    "zmq": ">=2.13.0"
+    "zeromq": ">=5.2.8"
   },
   "devDependencies": {
-    "es6-promise": "^4.0.5"
+    "es6-promise": "^4.2.8"
   }
 }

@@ -1,4 +1,4 @@
-﻿var zmq = require("zmq");
+﻿var zmq = require("zeromq");
 var events = require("events");
 
 exports.create = create;
