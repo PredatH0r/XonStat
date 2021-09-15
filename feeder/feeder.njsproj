@@ -17,7 +17,7 @@
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <NodeExeArguments>
     </NodeExeArguments>
-    <StartWebBrowser>True</StartWebBrowser>
+    <StartWebBrowser>False</StartWebBrowser>
     <ScriptArguments>-c mycfg.json</ScriptArguments>
     <Environment>ql-match-jsons\a6558e8a-b1d4-4c69-acac-5cf3cf13c588.json.gz
 ql-match-jsons/anon-vs-untracked.json.gz

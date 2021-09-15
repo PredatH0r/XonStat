@@ -17,13 +17,15 @@
   },
   "webadmin": {
     "enabled": true,
-    "logLevel": "INFO"
+    "logLevel": "INFO",
+    "urlprefix": "" 
   },
   "webapi": {
     "enabled": true,
     "logLevel": "INFO",
     "database": "postgres://xonstat:xonstat@localhost/xonstatdb",
-    "aggregatePanelPorts": [ ]
+    "aggregatePanelPorts": [],
+    "urlprefix": "" 
   },
   "webui": {
     "steamAuth": {
@@ -31,8 +33,14 @@
       "realm": "http://yourdomain:8081/",
       "apiKey": "put-your-steam-API-key-here"
     },
-    "siteName":  "myStatsSite",
+    "siteName": "myStatsSite",
     "sessionSecret": "put-some-random-stuff-here",
-    "postLogoutUrl":  "http://localhost:8080/"
-  }
+    "postLogoutUrl": "http://localhost:8080/",
+    "urlprefix": "",
+    "enabled": "put-your-steam-API-key-here",
+    "reregisterCooldownDays": 30
+  },
+  "geoip": {
+    "apiKey": ""
+  } 
 }

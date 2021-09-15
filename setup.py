@@ -8,19 +8,31 @@ README = open(os.path.join(here, 'README.md')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
-    'pyramid',
-    'SQLAlchemy',
-    'transaction',
-    'repoze.tm2>=1.0b1', # default_commit_veto
-    'zope.sqlalchemy',
-    'WebError',
-    'sqlahelper',
-    'webhelpers',
-    'psycopg2',
-    'pyramid_beaker',
-    'pyramid_mako',
-    'pyramid_persona',
-    'waitress',
+    'pyramid==1.6',
+    'SQLAlchemy==1.2.7',
+    'transaction==1.4.4',
+    'repoze.tm2==2.0', # default_commit_veto
+    'zope.sqlalchemy==0.7.6',
+    'WebError==0.11',
+    'sqlahelper==1.0',
+    'webhelpers==1.3',
+    'psycopg2==2.7.4',
+    'pyramid_beaker==0.8',
+    'pyramid_mako==1.0.2',
+    'pyramid_persona==1.6.1',
+    'waitress==1.1.0',
+    
+    'markupsafe==0.23',
+    'repoze.lru==0.6',
+    'pygments==2.1',
+    'beaker==1.7.0',
+    'mako==1.0.3',
+    'pybrowserid==0.9.2',
+    'venusian==1.0',
+    'translationstring==1.3',
+    'WebOb==1.5.1',
+    'zope.deprecation==4.1.2',
+    'zope.interface==4.1.3',
     ]
 
 if sys.version_info[:3] < (2,5,0):

@@ -1,0 +1,17 @@
+see the other instructions for general installation steps.
+
+PostgreSQL 32 and 64 bit use different binary database formats.
+You will get random errors with some SQL statements when a 32 bit data directory is used with a 64 bit PostgreSQL engine.
+
+qlstats uses a 32bit version of PostgreSQL 9.4. Download the "Win x86-32" 9.4 zip package from https://www.enterprisedb.com/download-postgresql-binaries.
+To run PostgreSQL with database files located in D:\PostgreSQL use: postgres.exe -d D:\PostgreSQL.3
+
+Python 2.7 should also be 32bit (because psycopg2 uses native DLLs to access PostgreSQL from Python): https://www.python.org/downloads/release/python-2718/
+
+To install dependencies for XonStat/QLStats:
+cd /d d:\sources\qlstats\xonstat
+set PYTHONPATH=%cd%\lib\python
+mkdir %PYTHONPATH%
+pip install pastescript
+python setup.py install --home=%cd%
+paster serve local.ini
