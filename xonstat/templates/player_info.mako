@@ -26,7 +26,10 @@ ${parent.css()}
 ${parent.js()}
 
 %if may_view:
-<script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['corechart']}]}"></script>
+<!--<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>-->
+<!-- www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['corechart']}]} -->
+<script type="text/javascript" src="/static/charts/loader.js"></script>
+<!--<script type="text/javascript" src="/static/charts/51/loader.js?{'modules':[{'name':'visualization','version':'1','packages':['corechart']}]}"></script>-->
 <script src="/static/js/weaponCharts.min.js"></script>
 
 <script type="text/javascript">
@@ -58,6 +61,11 @@ var jsonUrl = "${request.route_path('player_weaponstats_data_json', id=player.pl
 var chartData, chartName = "accuracyChart", chartOpt = null, chartLimit=20;
 google.load('visualization', '1.1', {packages: ['corechart']});
 function loadDataAndDrawChart() {
+  if (!google.visualization) {
+    setTimeout(loadDataAndDrawChart, 500);
+    return;
+  }
+    
   var url = jsonUrl + (gametype ? "&game_type=" + gametype : "");
   url = url.replace(/limit=\d+/, "limit=" + chartLimit);
   $.getJSON(url, function(data) {

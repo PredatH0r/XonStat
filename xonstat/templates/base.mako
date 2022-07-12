@@ -8,16 +8,14 @@
     <title>QLStats: Player Statistics for Quake Live</title>
     <meta name="description" content="">
     <meta name="author" content="">
-
-    <!--[if lt IE 9]>
-      <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans&subset=latin,greek,cyrillic-ext,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
+    
+    <!-- fonts.googleapis.com/css?family=Open+Sans&subset=latin,greek,cyrillic-ext,latin-ext,cyrillic -->
+    <link href='/static/css/googlefonts.css' rel='stylesheet' type='text/css'>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2">
 
     <%block name="css">
-    <!--<link href="/static/css/bootstrap.min.css" rel="stylesheet">-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <!-- maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
 
     <link href="/static/css/app.min.css" rel="stylesheet">
     </%block>
@@ -72,13 +70,8 @@
         if (!document.cookie.match(/weapons=[a-z]*/))
           setCookie("weapons", "mg,lg,rg,hmg");
 
-        // Google Analytics
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-        ga('create', 'UA-71098578-1', 'auto');
-        ga('send', 'pageview');
+        // Google Analytics (removed)
+        
       })();
     </script>
   </head>
@@ -118,9 +111,10 @@
     </div>
 
     <%block name="js">
-    <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js'></script>
-    <!--<script type='text/javascript' src='/static/js/bootstrap.min.js'></script>-->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <!-- ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js' -->
+    <script type='text/javascript' src='/static/js/jquery.min.js'></script>
+    <!-- maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js -->
+    <script type='text/javascript' src='/static/js/bootstrap.min.js'></script>
     <script>
       var entityMap = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': '&quot;', "'": '&#39;', "/": '&#x2F;' };
       function escapeHtml(string) { return String(string).replace(/[&<>"'\/]/g, function (s) { return entityMap[s]; }); }
