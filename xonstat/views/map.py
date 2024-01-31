@@ -79,63 +79,68 @@ def _map_info_data(request):
             gmap.image = ""
 
         # recent games played in descending order
-        rgs = recent_games_q(map_id=map_id, limit=recent_games_count).all()
-        recent_games = [RecentGame(row) for row in rgs]
+        #rgs = recent_games_q(map_id=map_id, limit=recent_games_count).all()
+        #recent_games = [RecentGame(row) for row in rgs]
+        recent_games = []
 
         # top players by score
-        top_scorers = DBSession.query(Player.player_id, Player.nick,
-                func.sum(PlayerGameStat.score)).\
-                filter(Player.player_id == PlayerGameStat.player_id).\
-                filter(Game.game_id == PlayerGameStat.game_id).\
-                filter(Game.map_id == map_id).\
-                filter(Player.player_id > 2).\
-                filter(PlayerGameStat.create_dt >
-                        (datetime.utcnow() - timedelta(days=leaderboard_lifetime))).\
-                order_by(expr.desc(func.sum(PlayerGameStat.score))).\
-                group_by(Player.nick).\
-                group_by(Player.player_id).all()[0:leaderboard_count]
+        # top_scorers = DBSession.query(Player.player_id, Player.nick,
+        #         func.sum(PlayerGameStat.score)).\
+        #         filter(Player.player_id == PlayerGameStat.player_id).\
+        #         filter(Game.game_id == PlayerGameStat.game_id).\
+        #         filter(Game.map_id == map_id).\
+        #         filter(Player.player_id > 2).\
+        #         filter(PlayerGameStat.create_dt >
+        #                 (datetime.utcnow() - timedelta(days=leaderboard_lifetime))).\
+        #         order_by(expr.desc(func.sum(PlayerGameStat.score))).\
+        #         group_by(Player.nick).\
+        #         group_by(Player.player_id).all()[0:leaderboard_count]
 
-        top_scorers = [(player_id, html_colors(nick), score) \
-                for (player_id, nick, score) in top_scorers]
+        # top_scorers = [(player_id, html_colors(nick), score) \
+        #         for (player_id, nick, score) in top_scorers]
+        top_scorers = []
 
         # top players by playing time
-        top_players = DBSession.query(Player.player_id, Player.nick,
-                func.sum(PlayerGameStat.alivetime)).\
-                filter(Player.player_id == PlayerGameStat.player_id).\
-                filter(Game.game_id == PlayerGameStat.game_id).\
-                filter(Game.map_id == map_id).\
-                filter(Player.player_id > 2).\
-                filter(PlayerGameStat.create_dt >
-                        (datetime.utcnow() - timedelta(days=leaderboard_lifetime))).\
-                order_by(expr.desc(func.sum(PlayerGameStat.alivetime))).\
-                group_by(Player.nick).\
-                group_by(Player.player_id).all()[0:leaderboard_count]
+        # top_players = DBSession.query(Player.player_id, Player.nick,
+        #         func.sum(PlayerGameStat.alivetime)).\
+        #         filter(Player.player_id == PlayerGameStat.player_id).\
+        #         filter(Game.game_id == PlayerGameStat.game_id).\
+        #         filter(Game.map_id == map_id).\
+        #         filter(Player.player_id > 2).\
+        #         filter(PlayerGameStat.create_dt >
+        #                 (datetime.utcnow() - timedelta(days=leaderboard_lifetime))).\
+        #         order_by(expr.desc(func.sum(PlayerGameStat.alivetime))).\
+        #         group_by(Player.nick).\
+        #         group_by(Player.player_id).all()[0:leaderboard_count]
 
-        top_players = [(player_id, html_colors(nick), score) \
-                for (player_id, nick, score) in top_players]
+        # top_players = [(player_id, html_colors(nick), score) \
+        #         for (player_id, nick, score) in top_players]
+        top_players = []
 
         # top servers using/playing this map
-        top_servers = DBSession.query(Server.server_id, Server.name,
-                func.count(Game.game_id)).\
-                filter(Game.server_id == Server.server_id).\
-                filter(Game.map_id == map_id).\
-                filter(Game.create_dt >
-                        (datetime.utcnow() - timedelta(days=leaderboard_lifetime))).\
-                order_by(expr.desc(func.count(Game.game_id))).\
-                group_by(Server.name).\
-                group_by(Server.server_id).all()[0:leaderboard_count]
+        # top_servers = DBSession.query(Server.server_id, Server.name,
+        #         func.count(Game.game_id)).\
+        #         filter(Game.server_id == Server.server_id).\
+        #         filter(Game.map_id == map_id).\
+        #         filter(Game.create_dt >
+        #                 (datetime.utcnow() - timedelta(days=leaderboard_lifetime))).\
+        #         order_by(expr.desc(func.count(Game.game_id))).\
+        #         group_by(Server.name).\
+        #         group_by(Server.server_id).all()[0:leaderboard_count]
+        top_servers = []
 
         # top captimes
-        captimes_raw = DBSession.query(Player.player_id, Player.nick,
-            PlayerCaptime.fastest_cap, PlayerCaptime.game_id).\
-                filter(PlayerCaptime.map_id == map_id).\
-                filter(Player.player_id == PlayerCaptime.player_id).\
-                order_by(PlayerCaptime.fastest_cap).\
-                limit(25).\
-                all()
+        # captimes_raw = DBSession.query(Player.player_id, Player.nick,
+        #     PlayerCaptime.fastest_cap, PlayerCaptime.game_id).\
+        #         filter(PlayerCaptime.map_id == map_id).\
+        #         filter(Player.player_id == PlayerCaptime.player_id).\
+        #         order_by(PlayerCaptime.fastest_cap).\
+        #         limit(25).\
+        #         all()
 
-        captimes = [Captime(c.player_id, html_colors(c.nick),
-            c.fastest_cap, c.game_id) for c in captimes_raw]
+        # captimes = [Captime(c.player_id, html_colors(c.nick),
+        #     c.fastest_cap, c.game_id) for c in captimes_raw]
+        captimes = []
 
     except Exception as e:
         gmap = None

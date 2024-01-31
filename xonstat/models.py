@@ -162,7 +162,8 @@ class PlayerGameStat(object):
     def to_dict(self):
         return {'player_id':self.player_id, 'game_id':self.game_id,
             'create_dt':self.create_dt.strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'alivetime':self.alivetime, 'rank':self.rank, 'score':self.score, 'team':self.team, 'pushes':self.pushes, 'destroys':self.destroys}
+            'alivetime':self.alivetime, 'rank':self.rank, 'score':self.score, 'team':self.team, 'pushes':self.pushes, 'destroys':self.destroys,
+            'kills':self.kills, 'deaths':self.deaths, 'lives':self.lives }
 
     def nick_stripped(self):
         if self.nick is None:
