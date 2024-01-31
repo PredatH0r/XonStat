@@ -8,57 +8,78 @@ exports.fillAllServers = fillAllServers;
 exports.fillServer = fillServer;
 
 var _logger = log4js.getLogger("geoip");
-var apiKey = "";
+var throttledUntilTms = 0;
 
 function fillAllServers(cli, config) {
-  if (!config || !config.apiKey)
-    throw new Error("No apiKey in config", 1);
-  apiKey = config.apiKey;
-  return queryServers(cli)
-    .then(function(rows) { return processServers(cli, rows); });
+  return queryServers(cli).then(rows => processServers(cli, rows));
 }
 
 function queryServers(cli) {
   return Q
-    .ninvoke(cli, "query", "select distinct ip_addr from servers where location is null or location=''")
-    .then(function(result) { return Q(result.rows); });
+    .ninvoke(cli, "query", "select distinct ip_addr from servers where location is null or location='' and coalesce(ip_addr,'')<>''")
+    .then(result => Q(result.rows));
 }
 
 function processServers(cli, rows) {
-  var ips = rows.map(function(row) { return row.ip_addr; });
-  return ips.reduce(function(chain, ip) {
-    return chain
-      .then(function() { return fillServer(cli, ip); })
-      .catch(function(err) { _logger.error("Failed to set location info for " + ip + ": " + err); });
-  }, Q());
+  var ips = rows.map(function (row) { return row.ip_addr; });
+
+  var batches = [];
+  for (var i = 0; i < ips.length; i += 100)
+    batches.push(ips.slice(i, Math.min(i + 100, ips.length)));
+
+  return batches.reduce( (chain, batch) => chain.then(() => fillServers(cli, batch)), Q());
 }
 
 function fillServer(cli, ip) {
-  return lookupGeoIp(ip).then(function(geoInfo) { return updateDatabase(cli, ip, geoInfo); });
+  return fillServers(cli, [ip]);
 }
 
-function lookupGeoIp(ip) {
-  var defer = Q.defer();
-  var ok = true;
-  request.get("http://api.ipapi.com/" + ip + "?access_key=" + apiKey, { timeout: 7000 })
-    .on("error", function(err) { defer.reject(err); })
-    .on("response", function(response) {
-      if (response.statusCode != 200) {
-        ok = false;
-        defer.reject(new Error("HTTP status code " + response.statusCode));
-      }
-    })
-    .on("data", function(data) {
-      if (ok)
-        defer.resolve(JSON.parse(data));
+function fillServers(cli, ips) {
+  return lookupGeoIp(ips)
+    .then(results => 
+      results.reduce((chain, geoInfo) => chain
+        .then(() => updateDatabase(cli, geoInfo))
+          .catch(err => _logger.error("Failed to set location info for " + ip + ": " + err))
+      , Q()));
+}
+
+function lookupGeoIp(ips) {
+  var now = new Date().getTime();
+  var sleep = now < throttledUntilTms ? delay(throttledUntilTms - now) : Q();
+  return sleep
+    .then(() => {
+      var defer = Q.defer();
+      var ok = true;
+      var opt = {
+        uri: "http://ip-api.com/batch/?fields=country,countryCode,region,lat,lon,query",
+        method: "POST",
+        timeout: 5000,
+        json: true,
+        body: ips
+      };
+      request(opt)
+        .on("error", function (err) { defer.reject(err); })
+        .on("response", function (response) {
+          if (response.caseless.get("X-Rl") == "0")
+            throttledUntilTms = new Date().getTime() + parseInt(response.caseless.get("X-Ttl") * 1000);
+          if (response.statusCode != 200) {
+            ok = false;
+            defer.reject(new Error("HTTP status code " + response.statusCode));
+          }
+        })
+        .on("data", function (data) {
+          if (ok)
+            defer.resolve(JSON.parse(data));
+        });
+      return defer.promise;
     });
-  return defer.promise;
 }
 
-function updateDatabase(cli, ip, geoInfo) {
-  // {"ip":"212.241.101.170","country_code":"AT","country_name":"Austria","region_code":"","region_name":"","city":"","zip_code":"","time_zone":"Europe/Vienna","latitude":48.2,"longitude":16.3667,"metro_code":0}
-  var region = getRegion(geoInfo.latitude, geoInfo.longitude);
-  var values = [geoInfo.country_name, region, geoInfo.country_code, null, geoInfo.latitude, geoInfo.longitude, ip];
+function updateDatabase(cli, geoInfo) {
+  // geoInfo = {country: 'Spain', countryCode: 'ES', region: 'CM', lat: ..., lon: ..., query: '192.157.241.12' }
+  var ip = geoInfo.query;
+  var region = getRegion(geoInfo.lat, geoInfo.lon);
+  var values = [geoInfo.country, region, geoInfo.countryCode, geoInfo.region, geoInfo.lat, geoInfo.lon, ip];
   return Q
     .ninvoke(cli, "query", { name: "servers_upd", text: "update servers set location=$1, region=$2, country=$3, state=$4, latitude=$5, longitude=$6 where ip_addr=$7", values: values })
     .then(function() { _logger.debug("updated location for server " + ip) });
