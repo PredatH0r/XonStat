@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 import re
 import sqlalchemy.sql.functions as func
 import sqlalchemy.sql.expression as expr

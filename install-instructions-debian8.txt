@@ -58,7 +58,6 @@ cd ~xonstat/xonstat
 mkdir lib
 mkdir lib/python
 export PYTHONPATH=/home/xonstat/xonstat/lib/python
-pip install requests\<2.0.0
 python setup.py install --home=/home/xonstat/xonstat
 
 

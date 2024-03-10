@@ -22,12 +22,13 @@
   </div>
 </div>
 
-<div class="row newsitem" style="display:none">
+<div class="row newsitem" style="display:block;background-color:#9A7D0A">
   <div class="col-sm-2">
-    2016-01-06 21:00 CET
+    2023-12-15
   </div>
   <div class="col-sm-10">
-    added <a href="/news">News/Forum</a> (hosted by plusforward.net) with a <a href="/news#4488">Rating Q&A</a> thread
+    qlstats.net moved to a new hoster and has a new IP address.
+    <br>Server owners who use a firewall may have to update the rule to allow connections from the new qlstats.net IP to the ZMQ port.
   </div>
 </div>
 

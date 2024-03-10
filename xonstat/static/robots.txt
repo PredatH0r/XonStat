@@ -1,7 +1,8 @@
 User-agent: *
-Disallow: /players/
-Disallow: /player/
-Disallow: /games/
-Disallow: /game/
-Disallow: /servers/
-Disallow: /server/
+User-agent: AdsBot-Google
+User-agent: AdsBot-Google-Mobile
+User-agent: Mediapartners-Google
+User-agent: FeedFetcher-Google
+User-agent: GoogleProducer
+User-agent: APIs-Google
+Disallow: /
