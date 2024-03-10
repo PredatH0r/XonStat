@@ -91,7 +91,8 @@
 
 
 <script language="javascript" type="text/javascript">
-  
+  var controlPressed = false;
+
   function fillServerList() {
     $.getJSON("api/servers", function(servers) {
       var prevIp = "", prevOwner = "";
@@ -145,6 +146,13 @@
 
   var server, owner;
   function showEditForm(type, value) {
+
+    // ctrl + click on a port number opens the qlstats.net server page
+    if (controlPressed && type == "port") {
+      window.location.href = "/server/" + value;
+      return;
+    }
+
     setOwnerServerTitle(type, value);
     $("#editBtnOk").removeClass("success error");
     $("#editStatusText").text("");
@@ -253,6 +261,8 @@
     });
 
     $("#mainSite").attr("href", "http://" + location.hostname + "/").text(location.hostname);
+    $(document).keydown(e => { controlPressed |= e.keyCode == 17; });
+    $(document).keyup(e => { controlPressed &= e.keyCode != 17; });
   }
 
   main();
