@@ -447,17 +447,20 @@ function connectToServerList(servers) {
   if (_config.webapi.database) {
     ret = ret.then(function() {
       return utils.dbConnect(_config.webapi.database)
-        .then(function(cli) {
+        .then(function (cli) {
           return Q
             .ninvoke(cli, "query", "select hashkey, port from servers")
-            .then(function(result) {
+            .then(function (result) {
               var gamePorts = {};
-              result.rows.forEach(function(row) {
+              result.rows.forEach(function (row) {
                 gamePorts[row.hashkey] = row.port;
               });
               return gamePorts;
             })
-            .finally(function() { cli.release(); });
+            .finally(function () { cli.release(); });
+        })
+        .fail(function () {
+          return {};
         });
     });
   }
