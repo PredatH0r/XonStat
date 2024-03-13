@@ -6,7 +6,7 @@ exports.setLogger = setLogger;
 
 
 var MonitorInterval = 1000; // interval for checking connection status
-var ConnectAttemptInterval = 10 * 1000; // try for 60 sec to establish a connection, then consider the server to be offline
+var ConnectAttemptInterval = 10 * 1000; // try for 10 sec to establish a connection, then consider the server to be offline
 var OfflineServerRetryInterval = 5 * 60 * 1000; // try to reconnect to offline servers after 5min
 var IdleReconnectInterval = 15 * 60 * 1000; // reconnect to idle servers after 15min (QL stops sending data at some point)
 var ReconnectRandomizedInterval = 10 * 1000; // randomly delay reconnection attempts by up to +/-5 seconds to avoid load spikes on the server
@@ -40,26 +40,33 @@ function StatsConnection(owner, ip, port, pass, onZmqMessageCallback, gamePort) 
   this.port = port;
   this.pass = pass;
   this.onZmqMessageCallback = onZmqMessageCallback;
+  this.gamePort = gamePort || port;
   
   this.addr = ip + ":" + port;
+  this.lastConnectAttemptFailed = false;
+  this.resetState();
+}
+
+StatsConnection.prototype.resetState = function () {
   this.matchStartTime = 0;
   this.playerStats = [];
+
+  if (this.reconnectTimer)
+    clearTimeout(this.reconnectTimer);
   this.reconnectTimer = null;
-  
+
   this.connecting = false;
   this.connected = false;
   this.disconnected = false;
   this.badPassword = false;
-  this.lastConnectAttemptFailed = false;
   this.lastMessageUtc = 0;
   this.connectUtc = 0;
-  
+
   // stuff for the webapi
-  this.gamePort = gamePort || port;
   this.players = {};
   this.gameType = null;
   this.factory = null;
-  
+
   // stuff for feeder to track rounds and real play time
   this.round = 0;
   this.roundStartTime = 0;
@@ -73,14 +80,12 @@ function StatsConnection(owner, ip, port, pass, onZmqMessageCallback, gamePort) 
 StatsConnection.prototype.connect = function(isReconnect) {
   var self = this;
 
-  this.badPassword = false;
-  this.disconnected = false;
-  this.connected = false;
+  if (this.connecting || this.connected)
+    return;
+
+  this.resetState();
   this.connecting = true;
   this.connectUtc = Date.now();
-  if (this.reconnectTimer)
-    clearTimeout(this.reconnectTimer);
-  this.reconnectTimer = null;
 
   this.sub = zmq.socket("sub");
   if (this.pass) {
@@ -89,7 +94,7 @@ StatsConnection.prototype.connect = function(isReconnect) {
     this.sub.plain_password = this.pass;
   }
 
-  //_logger.debug(self.addr + ": trying to connect");
+  _logger.trace(self.addr + ": trying to connect");
 
   this.sub.on("connect",
     safeFunction(() => {
@@ -105,6 +110,9 @@ StatsConnection.prototype.connect = function(isReconnect) {
 
   this.sub.on("connect_delay",
     safeFunction(() => {
+      _logger.trace(self.addr + ": connect_delay");
+      if (self.connected) // ignore a "connect_delay" that is received after a successful "connect"
+        return;
       if (Date.now() - self.connectUtc >= ConnectAttemptInterval) {
         if (self.lastConnectAttemptFailed) // avoid log spam
           _logger.debug(self.addr + ": still failing to connect, but will keep trying...");
@@ -137,19 +145,24 @@ StatsConnection.prototype.connect = function(isReconnect) {
     safeFunction(() => {
       if (self.disconnected)
         return;
-      if (Date.now() - self.connectUtc <= WrongPasswordInterval) {
-        // when the password is wrong, we first get a "connect" event and then immediately after a "disconnect"
-        _logger.info(self.addr + ": disconnected (probably wrong password)");
-        self.badPassword = true;
-        self.disconnect();
-        self.startReconnectTimer();
-      } else {
+
+      // "badPassword" state means there was an immediate disconnect before
+      var instantRetry = !self.badPassword;
+      self.badPassword = Date.now() - self.connectUtc <= WrongPasswordInterval;
+
+      if (instantRetry) {
         _logger.warn(self.addr + ": disconnected");
-        self.badPassword = false;
         self.disconnect();
         // defer reconnect so that the "monitor_error" caused by self.disconnect() gets processed first
         setTimeout(() => self.connect(), 0); 
       }
+      else {
+        // when the password is wrong, we first get a "connect" event and then immediately after a "disconnect"
+        _logger.info(self.addr + ": disconnected (probably wrong password)");
+        self.disconnect();
+        self.startReconnectTimer();
+      }
+
     }));
 
   this.sub.on("monitor_error",
