@@ -5,12 +5,12 @@ exports.create = create;
 exports.setLogger = setLogger;
 
 
-var MonitorInterval = 1000; // interval for checking connection status
-var ConnectAttemptInterval = 10 * 1000; // try for 10 sec to establish a connection, then consider the server to be offline
-var OfflineServerRetryInterval = 5 * 60 * 1000; // try to reconnect to offline servers after 5min
-var IdleReconnectInterval = 15 * 60 * 1000; // reconnect to idle servers after 15min (QL stops sending data at some point)
-var ReconnectRandomizedInterval = 10 * 1000; // randomly delay reconnection attempts by up to +/-5 seconds to avoid load spikes on the server
-var WrongPasswordInterval = 5 * 1000; // when connection is closed within this interval after connecting, it's probably due to wrong password
+const MonitorInterval = 1000; // interval for checking connection status
+const ConnectAttemptInterval = 10 * 1000; // try for 10 sec to establish a connection, then consider the server to be offline
+const OfflineServerRetryInterval = 5 * 60 * 1000; // try to reconnect to offline servers after 5min
+const IdleReconnectInterval = 15 * 60 * 1000; // reconnect to idle servers after 15min (QL stops sending data at some point)
+const ReconnectRandomizedInterval = 10 * 1000; // randomly delay reconnection attempts by up to +/-5 seconds to avoid load spikes on the server
+const ConnectAttempts = 3; // with a bad password, there is first a "connect" and then an immediate "disconnect" afterwards. Some servers disconnect also 1-2 times with a valid password
 
 var _logger = {};
 _logger.trace = _logger.debug = _logger.info = _logger.warn = _logger.error = function(msg) { log(msg); };
@@ -44,6 +44,8 @@ function StatsConnection(owner, ip, port, pass, onZmqMessageCallback, gamePort) 
   
   this.addr = ip + ":" + port;
   this.lastConnectAttemptFailed = false;
+  this.connectAttempt = 0;
+  this.badPassword = false;
   this.resetState();
 }
 
@@ -55,10 +57,13 @@ StatsConnection.prototype.resetState = function () {
     clearTimeout(this.reconnectTimer);
   this.reconnectTimer = null;
 
+  if (this.connectedTimer)
+    clearTimeout(this.connectedTimer);
+  this.connectedTimer = null;
+
   this.connecting = false;
   this.connected = false;
   this.disconnected = false;
-  this.badPassword = false;
   this.lastMessageUtc = 0;
   this.connectUtc = 0;
 
@@ -80,6 +85,8 @@ StatsConnection.prototype.resetState = function () {
 StatsConnection.prototype.connect = function(isReconnect) {
   var self = this;
 
+  _logger.trace(self.addr + ": connect(" + isReconnect + ")");
+
   if (this.connecting || this.connected)
     return;
 
@@ -94,23 +101,20 @@ StatsConnection.prototype.connect = function(isReconnect) {
     this.sub.plain_password = this.pass;
   }
 
-  _logger.trace(self.addr + ": trying to connect");
+  _logger.info(self.addr + ": trying to connect");
 
   this.sub.on("connect",
     safeFunction(() => {
-      self.connected = true;
-      self.connectUtc = Date.now();
-      self.lastConnectAttemptFailed = false;
-      if (isReconnect)
-        _logger.debug(self.addr + ": reconnected successfully");
-      else
-        _logger.info(self.addr + ": connected successfully");
-      self.resetIdleTimeout();
+      _logger.trace(self.addr + ": ZMQ connect");
+
+      if (!self.connected) // "message" might have been received even before "connect"
+        self.connectedTimer = setTimeout(() => self.logConnected(isReconnect), 10);
     }));
 
   this.sub.on("connect_delay",
     safeFunction(() => {
-      _logger.trace(self.addr + ": connect_delay");
+      _logger.trace(self.addr + ": ZMQ connect_delay");
+
       if (self.connected) // ignore a "connect_delay" that is received after a successful "connect"
         return;
       if (Date.now() - self.connectUtc >= ConnectAttemptInterval) {
@@ -124,37 +128,57 @@ StatsConnection.prototype.connect = function(isReconnect) {
       }
     }));
 
-  //this.sub.on("connect_retry",
-  //  safeFunction(() => {
-  //    self.connecting = true;
-  //    if (Date.now() - self.connectUtc >= ConnectAttemptInterval) {
-  //      self.disconnect();
-  //      self.startReconnectTimer();
-  //    } else if (self.failAttempt % 40 === 0)
-  //      _logger.debug(self.addr + ": retrying to connect");
-  //  }));
+  this.sub.on("connect_retry",
+    safeFunction(() => {
+      _logger.trace(self.addr + ": ZMQ connect_retry");
+    //  self.connecting = true;
+    //  if (Date.now() - self.connectUtc >= ConnectAttemptInterval) {
+    //    self.disconnect();
+    //    self.startReconnectTimer();
+    //  } else if (self.failAttempt % 40 === 0)
+    //    _logger.debug(self.addr + ": retrying to connect");
+    }));
 
   this.sub.on("message",
     safeFunction(data => {
+      _logger.trace(self.addr + ": ZMQ message");
+
       self.lastMessageUtc = Date.now();
+
+      // a "message" might arrive before a delayed logConnected() is called from within "connect"
+      if (!self.connected) {
+        clearTimeout(self.connectedTimer);
+        self.connectedTimer = null;
+        self.logConnected();
+      }
+
       self.onZmqMessageCallback(self, data);
       self.resetIdleTimeout();
     }));
 
   this.sub.on("disconnect",
     safeFunction(() => {
+      _logger.trace(self.addr + ": ZMQ disconnect");
+
       if (self.disconnected)
         return;
 
-      // "badPassword" state means there was an immediate disconnect before
-      var instantRetry = !self.badPassword;
-      self.badPassword = Date.now() - self.connectUtc <= WrongPasswordInterval;
+      if (self.connectedTimer) {
+        clearTimeout(self.connectedTimer);
+        self.connectedTimer = null;
+      }
 
-      if (instantRetry) {
-        _logger.warn(self.addr + ": disconnected");
+      self.badPassword = ++self.connectAttempt >= ConnectAttempts;
+
+      if (!self.badPassword) {
+        if (self.connected)
+          _logger.info(self.addr + ": disconnected");
+        else
+          _logger.trace(self.addr + ": disconnected")
+
         self.disconnect();
         // defer reconnect so that the "monitor_error" caused by self.disconnect() gets processed first
-        setTimeout(() => self.connect(), 0); 
+        setTimeout(() => self.connect(false), 0); 
       }
       else {
         // when the password is wrong, we first get a "connect" event and then immediately after a "disconnect"
@@ -162,11 +186,12 @@ StatsConnection.prototype.connect = function(isReconnect) {
         self.disconnect();
         self.startReconnectTimer();
       }
-
     }));
 
   this.sub.on("monitor_error",
     safeFunction(() => {
+      _logger.trace(self.addr + ": ZMQ monitor_error");
+
       if (self.disconnected) // the "monitor_error" event may be a result of intentionally disconnecting
         return;
       _logger.error(self.addr + ": error monitoring network status");
@@ -179,9 +204,26 @@ StatsConnection.prototype.connect = function(isReconnect) {
   this.sub.subscribe("");
 };
 
+StatsConnection.prototype.logConnected = function (isReconnect) {
+  const self = this;
+  self.connected = true;
+  self.connectUtc = Date.now();
+  self.badPassword = false;
+  self.lastConnectAttemptFailed = false;
+  if (isReconnect)
+    _logger.debug(self.addr + ": reconnected successfully");
+  else
+    _logger.info(self.addr + ": connected successfully");
+  self.resetIdleTimeout();
+}
+
 StatsConnection.prototype.startReconnectTimer = function() {
   var self = this;
-  this.reconnectTimer = setTimeout(function () { self.connect(); },
+  this.reconnectTimer = setTimeout(function () {
+    self.badPassword = false;
+    self.connectAttempt = 0;
+    self.connect();
+  },
     OfflineServerRetryInterval + (Math.random() - 0.5) * ReconnectRandomizedInterval);
 };
 
@@ -199,8 +241,9 @@ StatsConnection.prototype.onIdleTimeout = function() {
   this.connect(true);
 };
 
-StatsConnection.prototype.disconnect = function() {
-  var err;
+StatsConnection.prototype.disconnect = function () {
+  _logger.trace(this.addr + ": disconnect()");
+
   if (!this.disconnected) {
     this.disconnected = true;
     //try { this.sub.unsubscribe(""); } catch (err) { }
@@ -225,7 +268,7 @@ StatsConnection.prototype.disconnect = function() {
   this.connected = false;
   this.connecting = false;
   this.lastMessageUtc = 0;
-  this.connectUtc = Date.now();
+  //this.connectUtc = Date.now();
 
   if (this.idleTimeout)
     clearTimeout(this.idleTimeout);
@@ -234,6 +277,10 @@ StatsConnection.prototype.disconnect = function() {
   if (this.reconnectTimer)
     clearTimeout(this.reconnectTimer);
   this.reconnectTimer = null;
+
+  if (this.connectedTimer)
+    clearTimeout(this.connectedTimer);
+  this.connectedTimer = null;
 
   this.players = {};
   //this.gameType = null;
