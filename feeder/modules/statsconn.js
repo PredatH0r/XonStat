@@ -209,6 +209,7 @@ StatsConnection.prototype.logConnected = function (isReconnect) {
   self.connected = true;
   self.connectUtc = Date.now();
   self.badPassword = false;
+  self.connectAttempt = 0;
   self.lastConnectAttemptFailed = false;
   if (isReconnect)
     _logger.debug(self.addr + ": reconnected successfully");
