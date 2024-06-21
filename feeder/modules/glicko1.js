@@ -2,6 +2,8 @@
   // this is a backport of https://github.com/mmai/glicko2js to Glicko-1
   
   var MinRd = 30; // avoid that a player gets locked-in on a rating
+  var MaxChange = 75;
+  var MinRating = 300;
   var q = Math.log(10) / 400; // 0.0057565
   var mathPow = Math.pow;
   Math.pow = function (b, e) { return e == 2 ? b * b : mathPow(b, e); }
@@ -21,7 +23,8 @@
 
   Player.prototype.setRating = function(rating) {
     this.__rating = rating;
-    this.__oldR = rating;
+    this._ensureBounds();
+    this.__oldR = this.__rating;
   };
 
   Player.prototype.getRd = function() {
@@ -30,7 +33,8 @@
 
   Player.prototype.setRd = function(rd) {
     this.__rd = rd;
-    this.__oldRd = rd;
+    this._ensureBounds();
+    this.__oldRd = this.__rd;
   };
   
   Player.prototype.getPeriod = function() {
@@ -40,7 +44,7 @@
   Player.prototype.setPeriod = function (period, c2) {
     if (period == this.__period) return;
     if (c2 && this.__period && period > this.__period)
-      this.setRd(Math.max(MinRd, Math.min(Math.sqrt(Math.pow(this.__rd, 2) + c2 * (period - this.__period)), this.defaultRd)));
+      this.setRd(Math.sqrt(Math.pow(this.__rd, 2) + c2 * (period - this.__period)), this.defaultRd);
     this.__period = period;
   }
   
@@ -71,9 +75,16 @@
 
     var b = 1 / (1 / Math.pow(this.__rd, 2) + 1 / d2);
 
-    this.__rating += q * b * tempSum;
+    // begin qlstats changes
 
+    //this.__rating += q * b * tempSum;
+    //this.__rd = Math.max(MinRd, Math.sqrt(b));
+    var diff = q * b * tempSum;
+    diff = diff < 0 ? Math.Max(-MaxChange, diff) : Math.Min(MaxChange, diff); // limit the amout of possible change
+    this.__rating += q * b * tempSum;
     this.__rd = Math.max(MinRd, Math.sqrt(b));
+    this._ensureBounds();
+    // end qlstats changes
 
     this.opponents = [];
     this.outcomes = [];
@@ -100,7 +111,16 @@
   Player.prototype._g = function(RD) {
     return 1 / Math.sqrt(1 + 3 * Math.pow(q * RD / Math.PI, 2));
   };
-  
+
+  Player.prototype._ensureBounds() = function () {
+    if (this.__rating < MinRating)
+      this.__rating = MinRating;
+    if (this.__rd < MinRd)
+      this.__rd = MinRd;
+    if (this.__rd > defaultRd)
+      this.__rd = defaultRd;
+  }
+
   //=========================  Glicko class =============================================
   function Glicko(settings) {
     settings = settings || {};
