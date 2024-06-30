@@ -112,7 +112,7 @@
     return 1 / Math.sqrt(1 + 3 * Math.pow(q * RD / Math.PI, 2));
   };
 
-  Player.prototype._ensureBounds() = function () {
+  Player.prototype._ensureBounds = function () {
     if (this.__rating < MinRating)
       this.__rating = MinRating;
     if (this.__rd < MinRd)
