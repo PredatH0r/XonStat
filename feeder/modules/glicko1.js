@@ -80,8 +80,8 @@
     //this.__rating += q * b * tempSum;
     //this.__rd = Math.max(MinRd, Math.sqrt(b));
     var diff = q * b * tempSum;
-    diff = diff < 0 ? Math.Max(-MaxChange, diff) : Math.Min(MaxChange, diff); // limit the amout of possible change
-    this.__rating += q * b * tempSum;
+    diff = diff < 0 ? Math.max(-MaxChange, diff) : Math.min(MaxChange, diff); // limit the amout of possible change
+    this.__rating += diff;
     this.__rd = Math.max(MinRd, Math.sqrt(b));
     this._ensureBounds();
     // end qlstats changes
@@ -117,8 +117,8 @@
       this.__rating = MinRating;
     if (this.__rd < MinRd)
       this.__rd = MinRd;
-    if (this.__rd > defaultRd)
-      this.__rd = defaultRd;
+    if (this.__rd > this.defaultRd)
+      this.__rd = this.defaultRd;
   }
 
   //=========================  Glicko class =============================================

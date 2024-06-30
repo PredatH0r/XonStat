@@ -935,36 +935,25 @@ function saveMatchInDatabase(gt, game) {
     cli: undefined, mapId: undefined, serverId: undefined, summary: {}, gameId: undefined
   }; // helper object to transfer results between various "then" blocks
 
+  game.steamIdMappingReal = {}; // added to "game" so that gamerating can reuse this information
+  game.steamIdMappingAnon = {};
+  game.steamIdTracked = {};
+
   return utils.dbConnect(_config.webapi.database)
     .then(cli => { state.cli = cli; })
     .then(() => Q.ninvoke(state.cli, "query", "select game_id from games where match_id=$1", [game.matchStats.MATCH_GUID]))
     .then(result => {
       if (result.rowCount > 0) {
-        _logger.warn("Match with GUID " + game.matchStats.MATCH_GUID + " already exists with id=" + result.rows[0][0]);
-        return Q({ok: false});
+        _logger.warn("Match with GUID " + game.matchStats.MATCH_GUID + " already exists with id=" + result.rows[0].game_id);
+        return loadOrCreatePlayersForGame(state.cli, game)
+          .then(() => ({ ok: true, game_id: result.rows[0].game_id }));//Q({ok: false});
       }
       return Q()
         .then(() => Q.ninvoke(state.cli, "query", "select getOrCreateMap($1) as map_id", [game.matchStats.MAP]))
         .then(result => state.mapId = result.rows[0].map_id)
         .then(() => Q.ninvoke(state.cli, "query", "select getOrCreateServer($1, $2) as server_id", [game.serverIp + ":" + game.serverPort, game.matchStats.SERVER_TITLE]))
         .then(result => state.serverId = result.rows[0].server_id)
-        .then(() => {
-          game.steamIdMappingReal = {}; // added to "game" so that gamerating can reuse this information
-          game.steamIdMappingAnon = {};
-          game.steamIdTracked = {};
-          var anonymousCount = 0;
-          return game.playerStats.reduce((chain, p) => {
-            return chain
-              .then(() => Q.ninvoke(state.cli, "query", "select getOrCreatePlayer($1, $2, $3) as player_id", [p.STEAM_ID, p.NAME, utils.strippedNick(p.NAME)]))
-              .then(result => {
-                result.rows.map(row => {
-                  game.steamIdMappingReal[p.STEAM_ID] = Math.abs(row.player_id);
-                  game.steamIdMappingAnon[p.STEAM_ID] = row.player_id > 0 ? row.player_id : -(++anonymousCount);
-                  game.steamIdTracked[p.STEAM_ID] = row.player_id != null;
-                });
-              });
-          }, Q());
-        })
+        .then(() => loadOrCreatePlayersForGame(state.cli, game))
         .then(() => { state.summary = extractMatchSummary(gt, game) })  
         .then(() => Q.ninvoke(state.cli, "query",
           // I'd love to use "returning match_id" or a second query within the same statement to get the ID without 2 round-trips, but neither is working with pg 6.2
@@ -1008,6 +997,20 @@ function saveMatchInDatabase(gt, game) {
     .finally(() => { if (state.cli) state.cli.release(); });
 }
 
+function loadOrCreatePlayersForGame(cli, game) {
+  var anonymousCount = 0;
+  return game.playerStats.reduce((chain, p) => {
+    return chain
+      .then(() => Q.ninvoke(cli, "query", "select getOrCreatePlayer($1, $2, $3) as player_id", [p.STEAM_ID, p.NAME, utils.strippedNick(p.NAME)]))
+      .then(result => {
+        result.rows.map(row => {
+          game.steamIdMappingReal[p.STEAM_ID] = Math.abs(row.player_id);
+          game.steamIdMappingAnon[p.STEAM_ID] = row.player_id > 0 ? row.player_id : -(++anonymousCount);
+          game.steamIdTracked[p.STEAM_ID] = row.player_id != null;
+        });
+      });
+  }, Q());
+}
 function extractMatchSummary(gt, game) {
   var summary = { steamIds: [], playerIds: [], winningTeam: 0, score1: -999, score2: -999, player1: null, player2: null }
   var r1 = 999;
@@ -1129,6 +1132,7 @@ function saveScoreboard(gt, game, team, state, chain) {
 
 main();
 
+// hack for Visual Studio Debugger which terminates the process despite running HTTP server
 (function wait() {
   setTimeout(wait, 1000);
 })();
