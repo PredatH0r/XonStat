@@ -33,12 +33,10 @@
 
 var
   fs = require("graceful-fs"),
-  request = require("request"),
   log4js = require("log4js"),
   zlib = require("zlib"),
   Q = require("q"),
   express = require("express"),
-  http = require("http"),
   StatsConnection = require("./modules/statsconn"),
   semver = require("semver"),
   utils = require("./modules/utils");
@@ -475,7 +473,7 @@ function connectToServerList(servers) {
     }
     if (connectedCount === 0) {
       _logger.error("No active server connections. Terminating...");
-      process.exit(1);
+      //process.exit(1);
     }
   }, 15000);
 
@@ -638,7 +636,11 @@ function onZmqMessageCallback(conn, data) {
     
     ++conn.round;
     conn.roundStartTime = now;
-    conn.roundTimer = setTimeout(function () { roundSnapshot(conn) }, 14 * 1000); // "red won the round! round begins in: 10 ... 3, 2, 1, FIGHT!"    
+
+    // FreezeTag has 4000ms by default, but if g_freezeRoundDelay=0, there is no delay at all
+    // ClanArena has 10000ms + 4sec for the "Red won the round! Round begins in: 10 ... 3, 2, 1, FIGHT!" announcement
+    var roundDelay = conn.gameType == "ft" ? 4 : 14; 
+    conn.roundTimer = setTimeout(function () { roundSnapshot(conn) }, roundDelay * 1000);
   }
   
   function checkQuitter(conn, steamid) {
@@ -1126,4 +1128,7 @@ function saveScoreboard(gt, game, team, state, chain) {
 
 
 main();
-//process.exit(0);
+
+(function wait() {
+  setTimeout(wait, 1000);
+})();
