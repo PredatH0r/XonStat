@@ -637,9 +637,10 @@ function onZmqMessageCallback(conn, data) {
     ++conn.round;
     conn.roundStartTime = now;
 
-    // FreezeTag has 4000ms by default, but if g_freezeRoundDelay=0, there is no delay at all
-    // ClanArena has 10000ms + 4sec for the "Red won the round! Round begins in: 10 ... 3, 2, 1, FIGHT!" announcement
-    var roundDelay = conn.gameType == "ft" ? 4 : 14; 
+    // FreezeTag has 4000ms by default, ClanArena has 10000ms
+    // There is an additional delay for the "Red won the round! Round begins in: ..." announcement
+    // but this is somehow shortened if the configured round delay is < 4sec (in FT)
+    var roundDelay = conn.gameType == "ft" ? 8 : 14; 
     conn.roundTimer = setTimeout(function () { roundSnapshot(conn) }, roundDelay * 1000);
   }
   
@@ -1133,6 +1134,6 @@ function saveScoreboard(gt, game, team, state, chain) {
 main();
 
 // hack for Visual Studio Debugger which terminates the process despite running HTTP server
-(function wait() {
-  setTimeout(wait, 1000);
-})();
+//(function wait() {
+//  setTimeout(wait, 1000);
+//})();
