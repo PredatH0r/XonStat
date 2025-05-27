@@ -1,11 +1,6 @@
 ﻿var
   bodyParser = require("body-parser"),
-  fs = require("graceful-fs"),
   log4js = require("log4js"),
-  passport = require("passport"),
-  SteamStrategy = require("passport-steam").Strategy,
-  session = require("express-session"),
-  pg = require("pg"),
   Q = require("q"),
   utils = require("./utils");
 
