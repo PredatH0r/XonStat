@@ -436,10 +436,13 @@ function extractDataFromGameObject(game) {
   return players;
 
   function aggregateTimeAndScorePerPlayer() {
-    game.playerStats.forEach(function(p) {
-      botmatch |= p.STEAM_ID == "0";
+    game.playerStats.forEach(function (p) {
+      isTeamGame |= p.hasOwnProperty("TEAM");
+
+      var pendingSteamAuth = p.STEAM_ID == "0" && (!isTeamGame || p.TEAM != 0);// there are cases in team games where steam_id=0 can appear with team=0 (none). Maybe due to pending steam-auth?
+      botmatch |= p.STEAM_ID == "0" && !pendingSteamAuth; 
       untrackedPlayers |= !playersBySteamId[p.STEAM_ID] || playersBySteamId[p.STEAM_ID].pid <= 2;
-      if (p.WARMUP || botmatch || untrackedPlayers) // p.ABORTED must be counted for team switchers
+      if (p.WARMUP || botmatch || untrackedPlayers || pendingSteamAuth) // p.ABORTED must be counted for team switchers
         return;
 
       var pd = playerData[p.STEAM_ID];
@@ -471,8 +474,6 @@ function extractDataFromGameObject(game) {
       if (p.RANK == 1 && !p.ABORTED) // when using map_restart, there might be multiple aborted entries before the real winner/loser entry in duel
         pd.win = true;
       pd.quit |= p.QUIT;
-
-      isTeamGame |= p.hasOwnProperty("TEAM");
     });
     
     // on 2016-01-14 feeder started to track play times manually to exclude the map load + warmup time from PLAY_TIME
