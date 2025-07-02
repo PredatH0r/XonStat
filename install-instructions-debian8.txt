@@ -112,10 +112,12 @@ chown -R postgres:postgres /var/lib/postgresql/9.4
 ##################################
 # as xonstat user: test start of feeder and paster
 # this will be done by cron and the ~/cronjobs/paster.sh and feeder.sh scripts
+
 cd ~/xonstat/feeder
-mv cfg.json cfg1.json
+if [ ! -f cfg1.json ]; then cp cfg.json cfg1.json; fi
 node feeder.node.js -c cfg1.json
+
 cd ~/xonstat/xonstat
-mv local.ini qlstats.ini
+if [ ! -f qlstats.ini ]; then cp local.ini qlstats.ini; fi
 paster serve qlstats.ini
 
