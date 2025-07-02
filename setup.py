@@ -35,6 +35,8 @@ requires = [
     'WebOb==1.5.1',
     'zope.deprecation==4.1.2',
     'zope.interface==4.1.3',
+    'certifi==2021.10.8',
+    'configparser==4.0.2'
     ]
 
 if sys.version_info[:3] < (2,5,0):

@@ -1,14 +1,69 @@
-Only works with Ubuntu <=22.x due to dependencies on Python 2.7 and Node.js <=12.22.9
+Only works with Ubuntu <=22.04.5 due to dependencies on Python 2.7 and Node.js <=12.22.9
+- use new/updated installer: yes
+- install OpenSSH server: yes
 
+##########################################
 #as user with sudo permissions
+
+#apt-get install sudo
 sudo apt-get update
 sudo apt-get upgrade
-#sudo apt-get install sudo
-#sudo apt-get install git
+# sudo apt-get install git
+sudo apt-get -y install net-tools    #for ifconfig and others
+
+#- postgresql database engine for the website (binary db-backup files only compatible with 9.4)
+sudo apt-get -y install postgresql-common
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+sudo apt-get -y install postgresql-9.4
+sudo systemctrl start postgresql
+
+#- database performance analysis tools (optional)
+# see https://pganalyze.com/docs/install/01_enabling_pg_stat_statements
+# sudo apt-get -y install postgresql-contrib-9.4  # for extensions like pg_stat_statements
+# sudo apt-get -y install curl
+
+#- nodejs for feeder
+sudo apt-get -y install nodejs
+sudo apt-get -y install npm
+sudo apt-get -y install libzmq3-dev
+
+#- python2.7 for main website
+sudo apt-get -y install python2.7
+sudo ln -s /usr/bin/python2.7 /usr/bin/python
+sudo apt-get -y install python-pip
+sudo ln -s /usr/bin/pip2 /usr/bin/pip
+sudo apt-get -y install python2-dev
+sudo apt-get -y install postgresql-server-dev-9.4     # 9.4 on wily, 9.3 on trusty, ... use "apt-cache policy postgresql" to find the right version
+sudo python -m pip install pastescript
+
+#- nginx as a reverse proxy for the sites (optional)
+sudo apt-get -y install nginx
+sudo systemctl enable nginx
+
+#- letsencrypt SSL certificates (optional)
+sudo apt-get -y install letsencrypt
+#sudo apt-get -y install certbot 
+sudo apt-get -y install python3-certbot-nginx
+sudo certbot --nginx -d qlstats.net -d www.qlstats.net -d api.qlstats.net
+
+##########################################
+# as postgres user
+
+sudo su - postgres
+createuser -P xonstat  #use "xonstat" as password for DB-user
+echo "CREATE DATABASE xonstatdb WITH ENCODING='UTF8' OWNER=xonstat CONNECTION LIMIT=-1;" | psql
+export PGPASSWORD=xonstat
+echo "CREATE SCHEMA xonstat AUTHORIZATION xonstat;" | psql xonstatdb
+#echo "CREATE LANGUAGE plpgsql;" | psql xonstatdb
+exit
+
+##########################################
+# as xonstat user
 
 sudo adduser xonstat
 sudo su - xonstat
-
+echo "export PYTHONPATH=/home/xonstat/xonstat/lib/python" >~/.profile
+. ~/.profile
 git clone https://github.com/PredatH0r/XonStat.git
 mv XonStat xonstat
 chmod +x xonstat/cronjobs/*.sh
@@ -22,84 +77,45 @@ crontab -e
 0 12 * * * ~/xonstat/cronjobs/daily_task.sh
 # -- end of crontab edit
 
+cd ~/xonstat
+mkdir lib
+mkdir lib/python
+export PYTHONPATH=/home/xonstat/xonstat/lib/python
+python setup.py install --home=/home/xonstat/xonstat
 
-#====== postgres database engine for the website ======
-sudo apt-get install postgresql-common
-sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-sudo apt-get install postgresql-9.4
-
-# as postgres user
-sudo su - postgres
-createuser -P xonstat  #use "xonstat" as password for DB-user
-exit
-
-#---- option a) create a fresh database
-# as xonstat user in ~xonstat
-sudo su - xonstat
-git clone https://github.com/PredatH0r/xonstatdb.git
-echo "CREATE DATABASE xonstatdb WITH ENCODING='UTF8' OWNER=xonstat CONNECTION LIMIT=-1;" | psql
-export PGPASSWORD=xonstat
-echo "CREATE SCHEMA xonstat AUTHORIZATION xonstat;" | psql xonstatdb
-echo "CREATE LANGUAGE plpgsql;" | psql xonstatdb
-cd xonstatdb
-psql xonstatdb <build/build_full.sql
-psql xonstatdb <../xonstat/sql/qlstats-init.sql
-
-#---- option b) restore a backup
-# copy a backup of /var/lib/postgresql/9.4/ folder to that location
-chown -R postgres:postgres /var/lib/postgresql/9.4
-
-
-
-#====== nodejs based "feeder" process to connect to QL ZMQ =========
-# as xonstat
-sudo apt-get install nodejs
-sudo apt-get install npm
-sudo apt-get install libzmq3-dev
-cd ~xonstat/xonstat/feeder
+cd ~/xonstat/feeder
 npm install
 npm audit fix
 mkdir ql-match-jsons
 mkdir ql-match-jsons/errors
 
-
-#====== python based website ============
-
-sudo apt-get install python2.7
-ln -s /usr/bin/python2.7 /usr/bin/python
-sudo apt-get install python-pip
-ln -s /usr/bin/pip2 /usr/bin/pip
-sudo apt-get install python2-dev
-sudo apt-get install postgresql-server-dev-9.4     # 9.4 on wily, 9.3 on trusty, ... use "apt-cache policy postgresql" to find the right version
-sudo python -m pip install pastescript
-cd ~xonstat/xonstat
-mkdir lib
-mkdir lib/python
-export PYTHONPATH=/home/xonstat/xonstat/lib/python
-pip install configparser
-python setup.py install --home=/home/xonstat/xonstat
-
-
-#====== nginx as a reverse proxy for the sites
-sudo apt-get install nginx
-sudo systemctl enable nginx
-
-#====== letsencrypt SSL certificates ========
-apt-get install letsencrypt
-apt-get install certbot 
-apt-get install python3-certbot-nginx
-certbot --nginx -d qlstats.net -d www.qlstats.net -d api.qlstats.net
-
-#===== to simplify updates
+# to simplify updates via git:
 git config --global user.name "your-name-here"
 git config --global user.email "your@email.here"
 #--- to update:
-git stash
-git pull --rebase
-git stash pop
+#git stash
+#git pull --rebase
+#git stash pop
 
+#---- option a) create a fresh database
+# as xonstat user in ~xonstat
+cd ~
+git clone https://github.com/PredatH0r/xonstatdb.git
+cd xonstatdb
+psql xonstatdb <build/build_full.sql
+psql xonstatdb <../xonstat/sql/qlstats-init.sql
 
-#====== database performance analysis tools
-# see https://pganalyze.com/docs/install/01_enabling_pg_stat_statements
-sudo apt-get install postgresql-contrib-9.4  # for extensions like pg_stat_statements
-sudo apt-get install curl
+#---- option b) restore a DB-backup
+# copy a backup of /var/lib/postgresql/9.4/ folder to that location
+chown -R postgres:postgres /var/lib/postgresql/9.4
+
+##################################
+# as xonstat user: test start of feeder and paster
+# this will be done by cron and the ~/cronjobs/paster.sh and feeder.sh scripts
+cd ~/xonstat/feeder
+mv cfg.json cfg1.json
+node feeder.node.js -c cfg1.json
+cd ~/xonstat/xonstat
+mv local.ini qlstats.ini
+paster serve qlstats.ini
+
