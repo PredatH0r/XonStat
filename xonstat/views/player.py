@@ -11,13 +11,14 @@ from webhelpers.paginate import Page
 from xonstat.models import *
 from xonstat.util import page_url, to_json, pretty_date, datetime_seconds
 from xonstat.util import is_cake_day, verify_request
-from xonstat.views.helpers import RecentGame, recent_games_q
+from xonstat.views.helpers import RecentGame, recent_games_q, checkSession
 from urllib import unquote
 
 log = logging.getLogger(__name__)
 
 
 def player_index_data(request):
+    checkSession(request)
     if request.params.has_key('page'):
         current_page = request.params['page']
     else:
@@ -414,6 +415,8 @@ def get_recent_games(player_id, limit=20, game_type_cd=None):
     return recent_games
 
 def player_recent_games_json(request):
+    checkSession(request)
+
     player_id = int(request.matchdict["id"])
     limit = request.params.get("limit", 20)
     game_type_cd = request.params.get("game_type_cd")
@@ -518,6 +521,8 @@ def get_damage_stats(player_id, weapon_cd, games):
 
 
 def player_info_data(request):
+    checkSession(request)
+
     player_id = int(request.matchdict['id'])
     game_type_cd = request.params.get("game_type_cd") or request.cookies.get("gametype")
     if player_id <= 2:
@@ -619,6 +624,7 @@ def player_info_json(request):
 
 
 def player_game_index_data(request):
+    checkSession(request)
     try:
         player_id = int(request.matchdict['player_id'])
     except:
@@ -709,6 +715,7 @@ def player_game_index_json(request):
 
 
 def player_accuracy_data(request):
+    checkSession(request)
     player_id = request.matchdict['id']
     allowed_weapons = ['nex', 'rifle', 'shotgun', 'uzi', 'minstanex']
     weapon_cd = 'nex'
@@ -765,6 +772,8 @@ def player_accuracy_json(request):
 
 
 def player_damage_data(request):
+    checkSession(request)
+
     player_id = request.matchdict['id']
     allowed_weapons = ['grenadelauncher', 'electro', 'crylink', 'hagar',
             'rocketlauncher', 'laser']
@@ -816,6 +825,8 @@ def player_damage_json(request):
 
 
 def player_hashkey_info_data(request):
+    checkSession(request)
+
     # hashkey = request.matchdict['hashkey']
 
     # the incoming hashkey is double quoted, and WSGI unquotes once...
@@ -947,6 +958,8 @@ def player_hashkey_info_text(request):
 
 
 def player_elo_info_data(request):
+    checkSession(request)
+
     """
     Provides elo information on a specific player. Raw data is returned.
     """
@@ -1023,6 +1036,8 @@ def player_elo_info_text(request):
 
 
 def player_captimes_data(request):
+    checkSession(request)
+
     player_id = int(request.matchdict['player_id'])
     if player_id <= 2:
         player_id = -1;
