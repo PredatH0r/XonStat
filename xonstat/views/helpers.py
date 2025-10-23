@@ -5,6 +5,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 from xonstat.models import *
 from xonstat.util import *
+from urllib import unquote
 
 log = logging.getLogger(__name__)
 
@@ -203,3 +204,11 @@ def recent_games_q(server_id=None, map_id=None, player_id=None,
 
 
     return recent_games_q
+
+def checkSession(request):
+    sessioncookie = unquote(request.cookies.get("SteamAuthSession", ""))
+    row = DBSession.query(Hashkey).\
+            filter_by(sessionkey=sessioncookie).\
+            first()
+    if row is None or row.active_ind == False:
+        raise pyramid.httpexceptions.HTTPUnauthorized

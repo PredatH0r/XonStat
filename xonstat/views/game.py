@@ -10,13 +10,15 @@ from beaker.cache import cache_regions, cache_region
 from webhelpers.paginate import Page, PageURL
 from xonstat.models import *
 from xonstat.util import page_url
-from xonstat.views.helpers import RecentGame, recent_games_q, games_q
+from xonstat.views.helpers import RecentGame, recent_games_q, games_q, checkSession
 
 
 log = logging.getLogger(__name__)
 
 
 def _game_info_data(request):
+    checkSession(request)
+
     game_id = request.matchdict['id']
 
     if request.params.has_key('show_elo'):
