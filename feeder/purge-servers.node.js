@@ -74,17 +74,17 @@ function purgeServers(cli, cfg) {
         if (activeServers[ipAndPort] >= cutoff) {
           ++activeCount;
         }
-        else if (activeIps[parts[1]] >= cutoff) {
+        else if (activeIps[ip] >= cutoff) {
           console.log("inactive " + ipAndPort); // server on different port on same IP is active
           ++inactiveCount;
         }
-        else if (activeServers[ipAndPort]) {
-          console.log("deleting " + ipAndPort);
+        else if (activeIps[ip]) {
+          console.log("deleting " + ipAndPort); // delete server if IP is already in the DB, but has no active ports
           ++deletedCount;
           return false;
         }
         else {
-          // ip:port wasn't found in the database, so add it, that it can be deleted if there are no recorded matches in the next 90 days
+          // IP wasn't found in the database, so add the server and delete it again in 90 days, if no matches are recorded
           console.log("adding " + ipAndPort);
           ++newCount;
           pendingInserts.push(
