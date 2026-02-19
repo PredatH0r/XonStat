@@ -85,6 +85,7 @@ function purgeServers(cli, cfg) {
         }
         else {
           // ip:port wasn't found in the database, so add it, that it can be deleted if there are no recorded matches in the next 90 days
+          console.log("adding " + ipAndPort);
           ++newCount;
           pendingInserts.push(
             Q.ninvoke(cli, "query", { name: "insert_server", text: "insert into servers(hashkey,ip_addr,port,create_dt) values ($1, $2, $3, now())", values: [ipAndPort, ip, port] })
