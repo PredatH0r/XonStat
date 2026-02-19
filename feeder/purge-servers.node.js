@@ -5,6 +5,7 @@
   utils = require("./modules/utils"),
   { MessageChannel } = require ('worker_threads');
 
+const DaysToKeepAlive = 6 * 30;
 
 function main() {
   const port = new MessageChannel();
@@ -65,7 +66,7 @@ function purgeServers(cli, cfg) {
       }
 
       var cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 3 * 30); // created or last recorded match more than 90 days ago
+      cutoff.setDate(cutoff.getDate() - DaysToKeepAlive); // created or last recorded match more than 90 days ago
       var newServers = cfg.feeder.servers.filter(serverInfoLine => {
         var parts = serverInfoLine.split(':');
         var ip = parts[1];
@@ -84,7 +85,7 @@ function purgeServers(cli, cfg) {
           return false;
         }
         else {
-          // IP wasn't found in the database, so add the server and delete it again in 90 days, if no matches are recorded
+          // IP wasn't found in the database, so add the server and delete it again after DaysToKeepAlive days, if no matches are recorded
           console.log("adding " + ipAndPort);
           ++newCount;
           pendingInserts.push(
