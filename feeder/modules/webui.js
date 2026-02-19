@@ -71,12 +71,16 @@ function initSteamAuthPages(express, app) {
   });
 
   app.get(prefix + "/auth/steam", function (req, res) {
-      res.cookie('SteamAuthReturn', req.query.returnUrl);
-      passport.authenticate("steam", { failureRedirect: prefix + "/login" });
-    }, 
-    function (req, res) {
-      // will never be executed due to automatic redirect
-    });
+      var returnUrl = req.query.returnUrl;
+      if (returnUrl == "undefined")
+        returnUrl = undefined;
+      if (returnUrl)
+        res.cookie('SteamAuthReturn', returnUrl);
+      else
+        res.clearCookie('SteamAuthReturn');
+      passport.authenticate("steam", { failureRedirect: prefix + "/login" })(req, res);
+    }
+  );
 
   app.get(prefix + "/auth/steam/return",
     passport.authenticate("steam", { failureRedirect: prefix + "/login" }),
