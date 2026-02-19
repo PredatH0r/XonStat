@@ -70,8 +70,10 @@ function initSteamAuthPages(express, app) {
     res.render("login", { user: req.user, conf: _config.webui });
   });
 
-  app.get(prefix + "/auth/steam",
-    passport.authenticate("steam", { failureRedirect: prefix + "/login" }),
+  app.get(prefix + "/auth/steam", function (req, res) {
+      res.cookie('SteamAuthReturn', req.query.returnUrl);
+      passport.authenticate("steam", { failureRedirect: prefix + "/login" });
+    }, 
     function (req, res) {
       // will never be executed due to automatic redirect
     });
@@ -84,8 +86,10 @@ function initSteamAuthPages(express, app) {
         .then(cli => {
           saveSessionCookie(cli, req)
             .finally(() => cli.release());
+        })
+        .then(() => {
+          res.redirect(req.cookies.SteamAuthReturn || "/my")
         });
-      res.redirect("/my");
     });
 
   app.get(prefix + "", ensureAuthenticated, function(req, res) {

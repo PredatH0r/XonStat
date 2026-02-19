@@ -6,7 +6,7 @@
     <ProjectGuid>{e8a8d291-9163-4cde-9ac1-b01e406db719}</ProjectGuid>
     <ProjectHome />
     <ProjectView>ShowAllFiles</ProjectView>
-    <StartupFile>feeder.node.js</StartupFile>
+    <StartupFile>purge-servers.node.js</StartupFile>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
@@ -18,7 +18,7 @@
     <NodeExeArguments>
     </NodeExeArguments>
     <StartWebBrowser>False</StartWebBrowser>
-    <ScriptArguments>-c mycfg.json</ScriptArguments>
+    <ScriptArguments>mycfg.json</ScriptArguments>
     <Environment>ql-match-jsons\a6558e8a-b1d4-4c69-acac-5cf3cf13c588.json.gz
 ql-match-jsons/anon-vs-untracked.json.gz
 -f -u tdm
@@ -34,7 +34,8 @@ sample-data\combined_stats_duel.json
     <Compile Include="modules\utils.js" />
     <Compile Include="modules\webui.js" />
     <Compile Include="validate-glicko.node.js" />
-    <Content Include="mycfg.json" />
+    <Content Include="purge-servers.node.js" />
+    <None Include="mycfg.json" />
     <Content Include="post-data.txt" />
     <Content Include="cfg.json" />
     <Content Include="cfg2.json" />

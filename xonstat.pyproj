@@ -776,6 +776,7 @@
     <Content Include="cronjobs\hourly_task.cmd" />
     <Content Include="cronjobs\hourly_task.sh" />
     <Content Include="cronjobs\paster.sh" />
+    <Content Include="cronjobs\purge_servers.sh" />
     <Content Include="install-instructions-debian8.txt" />
     <Content Include="install-instructions.txt" />
     <Content Include="local.ini" />
@@ -1526,6 +1527,7 @@
     <Content Include="xonstat\static\legal.html" />
     <Content Include="xonstat\static\robots.txt" />
     <Content Include="xonstat\static\serveradmin.html" />
+    <Content Include="xonstat\templates\401.mako" />
     <Content Include="xonstat\templates\404.mako" />
     <Content Include="xonstat\templates\account_index.mako" />
     <Content Include="xonstat\templates\accuracy.mako" />

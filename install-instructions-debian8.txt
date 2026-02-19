@@ -121,3 +121,8 @@ cd ~/xonstat/xonstat
 if [ ! -f qlstats.ini ]; then cp local.ini qlstats.ini; fi
 paster serve qlstats.ini
 
+#####################
+# block offending IPs
+apt-get install -y iptables-persistent
+iptables -A INPUT -s 47.79.192.0/18 -j DROP # Alibaba cloud
+

@@ -40,20 +40,19 @@ function main() {
 }
 
 function purgeServers(cli, cfg) {
-  var sql = "select hashkey from " +
-    "(select s.hashkey,s.create_dt,max(g.start_dt) start_dt " +
+  // query to get for all servers their hashkey (ip:port), create_dt and latest game start_dt
+  // NOTE: servers without any recorded matches are not found in the database!
+  var sql =
+    "select s.hashkey,s.create_dt create_dt,max(g.start_dt) start_dt " +
     "  from servers s left outer join games g on g.server_id=s.server_id " +
-    "  group by s.hashkey, s.create_dt " +
-    ") as tmp " +
-    "where create_dt>=current_date - interval '1 month' " +
-    "  or start_dt>=current_date - interval '3 month';"
-  var activeCount = 0, inactiveCount = 0, deletedCount = 0;
-
+    "  group by s.hashkey,s.create_dt ";
+  var activeCount = 0, inactiveCount = 0, deletedCount = 0, newCount = 0;
+  var pendingInserts = [];
   return Q.ninvoke(cli, "query", sql)
     .then(result => {
       var activeServers = {};
       result.rows.forEach(row => {
-        activeServers[row["hashkey"]] = true;
+        activeServers[row["hashkey"]] = row["start_dt"] || row["create_dt"];
       });
       return activeServers;
     })
@@ -61,26 +60,44 @@ function purgeServers(cli, cfg) {
       var activeIps = {};
       for (var ipAndPort in activeServers) {
         var parts = ipAndPort.split(':');
-        activeIps[parts[0]] = true;
+        if (!activeIps[parts[0]] || activeIps[parts[0]] < activeServers[ipAndPort])
+          activeIps[parts[0]] = activeServers[ipAndPort];
       }
 
+      var cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 3 * 30); // created or last recorded match more than 90 days ago
       var newServers = cfg.feeder.servers.filter(serverInfoLine => {
         var parts = serverInfoLine.split(':');
-        var ipAndPort = parts[1] + ":" + parts[2].split('/')[0];
-        if (activeServers[ipAndPort] === true) {
+        var ip = parts[1];
+        var port = parts[2].split('/')[0];
+        var ipAndPort = ip + ":" + port;
+        if (activeServers[ipAndPort] >= cutoff) {
           ++activeCount;
-        } else if (activeIps[parts[1]] === true) {
-          console.log("inactive " + ipAndPort);
+        }
+        else if (activeIps[parts[1]] >= cutoff) {
+          console.log("inactive " + ipAndPort); // server on different port on same IP is active
           ++inactiveCount;
-        } else {
+        }
+        else if (activeServers[ipAndPort]) {
           console.log("deleting " + ipAndPort);
           ++deletedCount;
           return false;
         }
+        else {
+          // ip:port wasn't found in the database, so add it, that it can be deleted if there are no recorded matches in the next 90 days
+          ++newCount;
+          pendingInserts.push(
+            Q.ninvoke(cli, "query", { name: "insert_server", text: "insert into servers(hashkey,ip_addr,port,create_dt) values ($1, $2, $3, now())", values: [ipAndPort, ip, port] })
+          );
+        }
+
         return true;
       });
       cfg.feeder.servers = newServers;
-      console.log(`active servers: ${activeCount}, inactive: ${inactiveCount}, deleted ${deletedCount}`);
+    })
+    .then(() => Q.all(pendingInserts))
+    .then(() => {
+      console.log(`active/new servers: ${activeCount}, inactive: ${inactiveCount}, deleted ${deletedCount}, added ${newCount}`);
     });
 }
 

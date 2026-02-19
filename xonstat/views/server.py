@@ -6,11 +6,13 @@ from beaker.cache import cache_regions, cache_region
 from webhelpers.paginate import Page
 from xonstat.models import *
 from xonstat.util import page_url, html_colors
-from xonstat.views.helpers import RecentGame, recent_games_q
+from xonstat.views.helpers import RecentGame, recent_games_q, checkSession
 
 log = logging.getLogger(__name__)
 
 def _server_index_data(request):
+    checkSession(request)
+
     if request.params.has_key('page'):
         current_page = request.params['page']
     else:

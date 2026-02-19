@@ -2,7 +2,7 @@
 from pyramid_beaker import set_cache_regions_from_settings
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.config import Configurator
-from pyramid.httpexceptions import HTTPNotFound
+from pyramid.httpexceptions import HTTPNotFound, HTTPUnauthorized
 from pyramid.renderers import JSONP
 from sqlalchemy import engine_from_config
 from xonstat.models import initialize_db
@@ -61,6 +61,7 @@ def main(global_config, **settings):
 
     # for 404s
     config.add_view(notfound, context=HTTPNotFound, renderer="404.mako")
+    config.add_view(unauthorized, context=HTTPUnauthorized, renderer="401.mako")
 
     # ROOT ROUTE
     config.add_route("main_index", "/")
