@@ -25,7 +25,7 @@ from xonstat.views.server import server_index_json
 from xonstat.views.search import search_q, search
 from xonstat.views.search import search_json
 
-from xonstat.views.exceptions   import notfound
+from xonstat.views.exceptions   import notfound, unauthorized
 
 from xonstat.views.main   import main_index, cookie_policy, top_players_by_time, top_servers_by_players, recent_games_json
 from xonstat.views.main   import top_servers_by_players, top_maps_by_times_played
