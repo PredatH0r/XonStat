@@ -22,13 +22,19 @@
   </div>
 </div>
 
+ <div class="row newsitem" style="display:block;background-color:#600A0A">
+   <div class="col-sm-12">
+     To view player, match, map or server data you need to be logged in through Steam.
+   </div>
+ </div>
+
 <div class="row newsitem" style="display:block;background-color:#9A7D0A">
   <div class="col-sm-2">
-    2023-12-15
+    2026-01-20
   </div>
   <div class="col-sm-10">
-    qlstats.net moved to a new hoster and has a new IP address.
-    <br>Server owners who use a firewall may have to update the rule to allow connections from the new qlstats.net IP to the ZMQ port.
+    Server IPs without any recorded matches during the last 90 days have been purged from the panels.
+    <br/>For now, an active server on any port will keep all other servers on the same IP tracked.
   </div>
 </div>
 

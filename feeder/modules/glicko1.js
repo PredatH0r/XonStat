@@ -2,7 +2,7 @@
   // this is a backport of https://github.com/mmai/glicko2js to Glicko-1
   
   var MinRd = 30; // avoid that a player gets locked-in on a rating
-  var MaxChange = 75;
+  var MaxChange = 150;
   var MinRating = 300;
   var q = Math.log(10) / 400; // 0.0057565
   var mathPow = Math.pow;
