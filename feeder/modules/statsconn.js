@@ -1,5 +1,5 @@
-﻿var zmq = require("zeromq");
-var events = require("events");
+﻿const zmq = require("zeromq");
+const events = require("events");
 
 exports.create = create;
 exports.setLogger = setLogger;
@@ -82,8 +82,8 @@ StatsConnection.prototype.resetState = function () {
   this.events = [];
 }
 
-StatsConnection.prototype.connect = function(isReconnect) {
-  var self = this;
+StatsConnection.prototype.connect = async function(isReconnect) {
+  const self = this;
 
   _logger.trace(self.addr + ": connect(" + isReconnect + ")");
 
@@ -94,16 +94,16 @@ StatsConnection.prototype.connect = function(isReconnect) {
   this.connecting = true;
   this.connectUtc = Date.now();
 
-  this.sub = zmq.socket("sub");
+  this.sub = new zmq.Subscriber(); //zmq.socket("sub");
   if (this.pass) {
-    this.sub.sap_domain = "stats";
-    this.sub.plain_username = "stats";
-    this.sub.plain_password = this.pass;
+    this.sub.zapDomain = "stats";
+    this.sub.plainUsername = "stats";
+    this.sub.plainPassword = this.pass;
   }
 
   _logger.info(self.addr + ": trying to connect");
 
-  this.sub.on("connect",
+  this.sub.events.on("connect",
     safeFunction(() => {
       _logger.trace(self.addr + ": ZMQ connect");
 
@@ -111,7 +111,7 @@ StatsConnection.prototype.connect = function(isReconnect) {
         self.connectedTimer = setTimeout(() => self.logConnected(isReconnect), 10);
     }));
 
-  this.sub.on("connect_delay",
+  this.sub.events.on("connect:delay",
     safeFunction(() => {
       _logger.trace(self.addr + ": ZMQ connect_delay");
 
@@ -128,35 +128,12 @@ StatsConnection.prototype.connect = function(isReconnect) {
       }
     }));
 
-  this.sub.on("connect_retry",
+  this.sub.events.on("connect:retry",
     safeFunction(() => {
       _logger.trace(self.addr + ": ZMQ connect_retry");
-    //  self.connecting = true;
-    //  if (Date.now() - self.connectUtc >= ConnectAttemptInterval) {
-    //    self.disconnect();
-    //    self.startReconnectTimer();
-    //  } else if (self.failAttempt % 40 === 0)
-    //    _logger.debug(self.addr + ": retrying to connect");
     }));
 
-  this.sub.on("message",
-    safeFunction(data => {
-      _logger.trace(self.addr + ": ZMQ message");
-
-      self.lastMessageUtc = Date.now();
-
-      // a "message" might arrive before a delayed logConnected() is called from within "connect"
-      if (!self.connected) {
-        clearTimeout(self.connectedTimer);
-        self.connectedTimer = null;
-        self.logConnected();
-      }
-
-      self.onZmqMessageCallback(self, data);
-      self.resetIdleTimeout();
-    }));
-
-  this.sub.on("disconnect",
+  this.sub.events.on("disconnect",
     safeFunction(() => {
       _logger.trace(self.addr + ": ZMQ disconnect");
 
@@ -188,7 +165,7 @@ StatsConnection.prototype.connect = function(isReconnect) {
       }
     }));
 
-  this.sub.on("monitor_error",
+  this.sub.events.on("monitor_error",
     safeFunction(() => {
       _logger.trace(self.addr + ": ZMQ monitor_error");
 
@@ -199,9 +176,37 @@ StatsConnection.prototype.connect = function(isReconnect) {
       self.startReconnectTimer(); // maybe should change this to an undelayed (but defered) self.connect()
     }));
 
-  this.sub.monitor(MonitorInterval, 0);
+  for (const type of [
+    "handshake",
+    "handshake:error:protocol",
+    "handshake:error:auth",
+    "handshake:error:other",
+  ]) {
+    this.sub.events.on(type, (event) => {
+      _logger.trace(self.addr + ": ZMQ " + JSON.stringify(event));
+    });
+  }
+
   this.sub.connect("tcp://" + this.addr);
   this.sub.subscribe("");
+
+  for await (const [msg] of this.sub) {
+    safeFunction(data => {
+      _logger.trace(self.addr + ": ZMQ message");
+
+      self.lastMessageUtc = Date.now();
+
+      // a "message" might arrive before a delayed logConnected() is called from within "connect"
+      if (!self.connected) {
+        clearTimeout(self.connectedTimer);
+        self.connectedTimer = null;
+        self.logConnected();
+      }
+
+      self.onZmqMessageCallback(self, data);
+      self.resetIdleTimeout();
+    })(msg);
+  }
 };
 
 StatsConnection.prototype.logConnected = function (isReconnect) {
@@ -247,9 +252,8 @@ StatsConnection.prototype.disconnect = function () {
 
   if (!this.disconnected) {
     this.disconnected = true;
-    //try { this.sub.unsubscribe(""); } catch (err) { }
     try {
-      this.sub.unmonitor();
+      //this.sub.events.close();
     } catch (err) {
       _logger.error("Can't unmonitor " + this.addr + ": " + err);
     }

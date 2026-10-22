@@ -1,6 +1,6 @@
 ﻿var
   log4js = require("log4js"),
-  request = require("request"),
+  request = require("dropin-request"),
   gsq = require("gamedig"),
   Q = require("q"),
   dns = require("dns"),
@@ -38,7 +38,7 @@ var _getProsNowPlayingCache = { timestamp: 0, data: {}, updatePromise: null }
 function init(config, app, feeder) {
   _config = config;
   _feeder = feeder;
-  _logger.setLevel(config.webapi.logLevel || "INFO");
+  _logger.level = config.webapi.logLevel || "INFO";
 
   // Internal API methods
 

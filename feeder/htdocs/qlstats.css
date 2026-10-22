@@ -8,10 +8,10 @@ td.connecting { color: gray; }
 td.badPassword { color: orange; }
 td.disconnected { color: red; }
 #serverList { margin-top: 50px; }
-#addForm, #editForm { display: none;position: fixed;top: 30px;right: 30px;width: 600px;min-height: 300px;background-color: #444;padding: 20px;}
+#addForm, #editForm { display: none;position: fixed;top: 30px;right: 30px;width: 600px;min-height: 300px;background-color: #444;padding: 20px; border: solid white 1px; border-radius: 0.5em; }
 div.button {cursor: pointer; padding: 5px 20px 5px 20px;display: inline-block;background-color: #888;margin-right: 20px;}
 .buttons { margin-top: 40px; }
-.button { padding: 5px 20px 5px 20px; }
+.button { padding: 5px 20px 5px 20px; border-radius: 0.5em; }
 #addStatusText, #editstatusText { margin-top: 20px;}
 div.button.success { background-color: #080;}
 div.button.error { background-color: #800;}

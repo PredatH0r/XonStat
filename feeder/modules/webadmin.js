@@ -24,7 +24,7 @@ var _feeder = {
 function init(config, app, feeder) {
   _config = config;
   _feeder = feeder;
-  _logger.setLevel(config.webadmin.logLevel || "INFO");
+  _logger.level = config.webadmin.logLevel || "INFO";
 
 
   var express = require("express");

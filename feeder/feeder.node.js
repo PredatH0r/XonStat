@@ -77,7 +77,7 @@ function main() {
     return processFilesFromCommandLine([__dirname + "/" + _config.feeder.jsondir + "errors"]);
 
   if (filesToProcess.length > 0) {
-    _logger.setLevel("DEBUG");
+    _logger.level = "DEBUG";
     return processFilesFromCommandLine(filesToProcess);
   }
 
@@ -151,7 +151,7 @@ function reloadConfig() {
     }
 
     _config = config;
-    _logger.setLevel(_config.feeder.logLevel || log4js.levels.INFO);
+    _logger.level = _config.feeder.logLevel || log4js.levels.INFO;
     _logger.info("Reloaded modified " + _configFileName);
     return true;
   }
@@ -457,7 +457,8 @@ function connectToServerList(servers) {
             })
             .finally(function () { cli.release(); });
         })
-        .fail(function () {
+        .fail(function (err) {
+          _logger.error("Failed to fetch ports from database: " + err);
           return {};
         });
     });
@@ -535,7 +536,7 @@ function onZmqMessageCallback(conn, data) {
   var msg = data.toString();
   var obj = JSON.parse(msg);
   var now = new Date().getTime();
-  _logger.trace(conn.addr + ": received ZMQ message: " + msg);
+  _logger.trace(conn.addr + ": received ZMQ message"); //: " + msg);
 
   //fs.writeFileSync("temp/" + obj.TYPE.toLowerCase() + ".json", msg);
 

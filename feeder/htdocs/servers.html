@@ -1,7 +1,19 @@
+<!DOCTYPE html>
 <html>
 <head>
-  <script src="/static/js/jquery.min.js"></script>
+  <script defer src="/static/js/jquery.min.js"></script>
+  <script>
+    if (typeof $ === 'undefined') { 
+      var head = document.getElementsByTagName('head')[0];
+      var js = document.createElement("script");
+      js.type = "text/javascript";
+      js.src = "jquery.min.js";
+      js.defer = true;
+      head.appendChild(js);   
 
+      window.onload = () => { window.main(); }
+    }
+  </script>
   <link rel="stylesheet" type="text/css" href="qlstats.css" />  
 </head>
 
@@ -265,7 +277,8 @@
     $(document).keyup(e => { controlPressed &= e.keyCode != 17; });
   }
 
-  main();
+  if (typeof $ !== 'undefined')
+    main();
 </script>
 
 </body>

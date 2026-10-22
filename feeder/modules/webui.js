@@ -24,7 +24,7 @@ var _feeder = {
 function init(config, app, feeder) {
   _config = config;
   _feeder = feeder;
-  _logger.setLevel(config.webui.logLevel || "INFO");
+  _logger.level = config.webui.logLevel || "INFO";
 
   if (!_config.webui.steamAuth || !_config.webui.steamAuth.apiKey) {
     _logger.warn("webui not started due to missing webui.steamAuth.apiKey");

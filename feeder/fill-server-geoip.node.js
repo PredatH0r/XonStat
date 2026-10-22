@@ -11,7 +11,7 @@
   const _logger = log4js.getLogger("geoip");
 
   function main() {
-    _logger.setLevel("DEBUG");
+    _logger.level = "DEBUG";
 
     return dbConnect()
       .then(function(cli) {

@@ -1,4 +1,4 @@
-﻿var 
+﻿const
   pg = require("pg"),
   Q = require("q");
 
@@ -15,7 +15,20 @@ function dbConnect(conn) {
   // this hack prevents node-postgres from applying the local time offset to timestaps that are already in UTC 
   // see: https://github.com/brianc/node-postgres/issues/429#issuecomment-24870258
   if (!initialized) {
-    pool = new pg.Pool({ connectionString: conn });
+    const regex = /postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/;
+    let match = conn.match(regex);
+    let poolConfig = { connectionString: conn };
+    // if (match) {
+    //   poolConfig = {
+    //     user: match[1],
+    //     password: match[2],
+    //     host: match[3],
+    //     port: match[4],
+    //     database: match[5]
+    //   };
+    // }
+    poolConfig.connectionTimeoutMillis = 1000;
+    pool = new pg.Pool(poolConfig);
     pg.types.setTypeParser(1114, function (stringValue) {
       return new Date(Date.parse(stringValue + "+0000"));
     });

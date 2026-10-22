@@ -1,7 +1,7 @@
 ﻿var
   pg = require("pg"),
   log4js = require("log4js"),
-  request = require("request"),
+  request = require("dropin-request"),
   Q = require("q");
 
 exports.fillAllServers = fillAllServers;
