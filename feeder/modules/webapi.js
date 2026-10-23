@@ -1,7 +1,7 @@
 ﻿var
   log4js = require("log4js"),
   request = require("dropin-request"),
-  gsq = require("gamedig"),
+  gsq = require("gamedig").GameDig, // v5 requires the appended .GameDig, v4 didn't
   Q = require("q"),
   dns = require("dns"),
   gr = require("./gamerating"),
@@ -81,7 +81,7 @@ function init(config, app, feeder) {
         .finally(function() { res.end(); });
     });
 
-    app.get(prefix + "/jsons/:date/:file.json(.gz)?", function(req, res) {
+    app.get(prefix + "/jsons/:date/:file.json{.gz}", function(req, res) {
       Q(getJson(req, res))
         .catch(function(err) { res.json({ ok: false, msg: "internal error: " + err, stacktrace: err.stack }); })
         .finally(function() { res.end(); });
