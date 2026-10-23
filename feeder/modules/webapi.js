@@ -677,7 +677,7 @@ function getSkillRatings() {
 // aggregate server status data from all stats tracking feeder processes
 function getAggregatedServerStatusData() {
   // bypass cache for single instance feeder/webadmin/webapi process
-  if (_config.webapi.aggregatePanelPorts.length == 0 || _config.webapi.aggregatePanelPorts.length == 1 && _config.webapi.aggregatePanelPorts[0] == _config.httpd.port)
+  if (_config.webapi.aggregatePanelPorts.length == 0 || !DEBUG && _config.webapi.aggregatePanelPorts.length == 1 && _config.webapi.aggregatePanelPorts[0] == _config.httpd.port)
     return getServerStatusdump();
 
   if (_getAggregatedStatusDataCache.timestamp + 5 * 1000 > Date.now())
@@ -716,22 +716,22 @@ function getAggregatedServerStatusData() {
 // request JSON from API of a stats tracking feeder process on another port
 function getJsonFromPort(port, route) {
   var defer = Q.defer();
-  var ok = true;
   var buffer = "";
-  request.get("http://127.0.0.1:" + port + route, { timeout: 1000 })
-    .on("error", function(err) { defer.reject(err); })
-    .on("response", function(response) {
-      if (response.statusCode != 200) {
-        ok = false;
-        defer.reject(new Error("HTTP status code " + response.statusCode));
+  var url = "http://127.0.0.1:" + port + route;
+  request.get(url, { timeout: 1000 }, (err, res, body) => {
+    if (err || res.statusCode != 200) {
+      defer.reject(new Error("HTTP status code " + res.statusCode));
+    }
+    else {
+      try {
+        var info = JSON.parse(body);
+        defer.resolve(info);
       }
-    })
-    .on("data", function(data) { buffer += data; })
-    .on("end", function() {
-      if (!ok) return;
-      var info = JSON.parse(buffer);
-      defer.resolve(info);
-    }).end();
+      catch(err) {
+        defer.reject(new Error("Failed to parse JSON from URL " + url));
+      }
+    }
+  });
 
   return defer.promise;
 }
