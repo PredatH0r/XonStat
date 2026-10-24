@@ -719,9 +719,10 @@ function getJsonFromPort(port, route) {
   var buffer = "";
   var url = "http://127.0.0.1:" + port + route;
   request.get(url, { timeout: 1000 }, (err, res, body) => {
-    if (err || res.statusCode != 200) {
+    if (err)
+      defer.reject(err);
+    else if (res.statusCode != 200)
       defer.reject(new Error("HTTP status code " + res.statusCode));
-    }
     else {
       try {
         var info = JSON.parse(body);

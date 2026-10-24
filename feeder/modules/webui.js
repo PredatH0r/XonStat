@@ -5,6 +5,7 @@ var
   express = require("express"),
   session = require("express-session"),
   cookieParser = require("cookie-parser"),
+  cookieSignature = require("cookie-signature"),
   Q = require("q"),
   utils = require("./utils");
 
@@ -31,7 +32,7 @@ function init(config, app, feeder) {
     return;
   }
 
-  app.use(cookieParser());
+  app.use(cookieParser(config.webui.sessionSecret));
   initSteamAuthPages(express, app);
 }
 
@@ -59,8 +60,8 @@ function initSteamAuthPages(express, app) {
   app.use(session({
     secret: _config.webui.sessionSecret,
     name: SessionCookieName,
-    resave: true,
-    saveUninitialized: true
+    resave: false,
+    saveUninitialized: false
   }));
   app.use(passport.initialize());
   app.use(passport.session());
@@ -93,7 +94,8 @@ function initSteamAuthPages(express, app) {
         })
         .then(() => {
           res.redirect(req.cookies.SteamAuthReturn || "/my")
-        });
+        })
+        .done();
     });
 
   app.get(prefix + "", ensureAuthenticated, function(req, res) {
@@ -114,7 +116,8 @@ function initSteamAuthPages(express, app) {
     // log out, close the iframe and send the user back to the site's start page
     if (req.user) {
       var userId = req.user.id;
-      req.logout();
+      req.logout(() => { });
+      res.clearCookie(SessionCookieName);
       utils.dbConnect()
         .then(cli => {
           Q.ninvoke(cli, "query", "update hashkeys set sessionkey=null where hashkey=$1; ", [userId])
@@ -141,8 +144,10 @@ function ensureAuthenticated(req, res, next) {
 }
 
 function saveSessionCookie(cli, req) {
-  // the session cookie is saved to the database so that the python/paster web server can identify the logged in user
-  return Q.ninvoke(cli, "query", "update hashkeys set sessionkey=$2 where hashkey=$1; ", [req.user.id, req.cookies[SessionCookieName]])
+  // the passport/session cookie is saved to the database so that the python/paster web server can identify the logged in user
+  // problem as of 2026-10-24: passport/express-session does not set the session cookie until after the response is sent, so we have to generate it manually
+  let signedCookie = "s:" + cookieSignature.sign(req.session.id, _config.webui.sessionSecret);
+  return Q.ninvoke(cli, "query", "update hashkeys set sessionkey=$2 where hashkey=$1; ", [req.user.id, signedCookie])
     .catch(err => {
       _logger.error(err);
       return Q();
