@@ -49,7 +49,7 @@ exports.createGameTypeStrategy = createGameTypeStrategy;
 var _logger = log4js.getLogger("gamerating");
 
 function init() {
-  _config = JSON.parse(fs.readFileSync(__dirname + "/../cfg.json")); 
+  _config = JSON.parse(fs.readFileSync(__dirname + "/../cfg.json"));
   //Q.longStackSupport = true;
 }
 
@@ -88,7 +88,7 @@ function rateSingleGameCore(gameId, game) {
     steamIds[p.STEAM_ID] = true;
   });
   steamIds = Object.keys(steamIds);
-  
+
   var ratingPeriod = glickoPeriod(new Date(game.gameEndTimestamp * 1000));
   g2.setPeriod(ratingPeriod);
 
@@ -128,7 +128,7 @@ function createGameTypeStrategy(gametype) {
     "ca": ["ca", "capickup", "hoq_ca", "mg_ca_classic"],
     "tdm": ["ctdm", "qcon_tdm", "mg_tdm_fullclassic", "tdm_classic", "hoq_tdm", "ftdm"],
     "ctf": ["ctf", "ctf2", "qcon_ctf", "hoq_ctf"],
-    "ad": ["ad"],
+    "ad": ["ad", "ad_competitive", "ad_comp"],
     "ft": ["freeze", "cftag", "ft", "ftclassic", "ft_classic", "mg_ft_fullclassic", "vft", "ft_competitive"]
   }
   var MinRequiredPlayersForGametype = {
@@ -149,7 +149,7 @@ function createGameTypeStrategy(gametype) {
     "ad": function(game) { return game.matchStats.SCORE_LIMIT >= 15 },
     "ft": function(game) { return Math.max(game.matchStats.TSCORE0, game.matchStats.TSCORE1) >= 8 || Math.abs(game.matchStats.TSCORE0 - game.matchStats.TSCORE1) >= 5 || game.matchStats.GAME_LENGTH >= 15 * 60 /* old JSONS have no ROUND_LIMIT */ }
   }
-  
+
   // a and b are performance scores adjusted for participation time
   var IsDrawForGametype = {
     "duel": function() { return false; },
@@ -209,7 +209,7 @@ function loadPlayers(cli, steamIds) {
     + " inner join players p on p.player_id=h.player_id"
     + " left outer join player_elos pe on pe.player_id=h.player_id and pe.game_type_cd=$1";
   var params = [gametype];
-  
+
   if (steamIds) {
     query += " where h.hashkey in ('-1'";
     steamIds.forEach(function(steamId, i) {
@@ -241,7 +241,7 @@ function getMatchIds(cli) {
       "select match_id, start_dt, game_id"
       + " from games"
       + " where game_type_cd=$2"
-      + " and mod " + (funMods ? "not" : "") + " in ('" + strategy.validFactories.join("','") + "')" 
+      + " and mod " + (funMods ? "not" : "") + " in ('" + strategy.validFactories.join("','") + "')"
       + " and g2_status<>$3"
       + cond
       + " order by start_dt", [onlyProcessMatchesBefore || new Date(), gametype, ERR_DATAFILEMISSING])
@@ -264,7 +264,7 @@ function reprocessMatches(cli, matches) {
           printProgress = false;
         }
         var midSave = ++counter % 1000 == 0 ? savePlayerRatings(cli, funMods) : Q();
-        
+
         g2.setPeriod(glickoPeriod(match.date));
         return /* ok || */ Q(midSave).then(function() { return reprocessMatch(cli, match.match_id, match.date, match.game_id, currentRatingPeriod); });
       });
@@ -291,7 +291,7 @@ function reprocessMatch(cli, matchId, date, gameId) {
     }
     file = null;
   }
-  
+
   _lastProcessedMatchStartDt = date;
 
   if (file) {
@@ -338,7 +338,7 @@ function processGame(cli, gameId, game) {
   if (typeof (result) === "number")
     return setGameStatus(cli, gameId, result).then(function() { return null; });
 
-  var isFunMod = strategy.validFactories.indexOf(game.matchStats.FACTORY) < 0 
+  var isFunMod = strategy.validFactories.indexOf(game.matchStats.FACTORY) < 0
     || game.matchStats.INSTAGIB;
 
   var playerRanking = result;
@@ -425,7 +425,7 @@ function extractDataFromGameObject(game) {
     return ERR_UNTRACKED_PLAYERS;
   if (game.roundCount) {
     if (roundsBlue != 0 && (roundsRed / roundsBlue > strategy.maxTeamTimeDiff || roundsBlue / roundsRed > strategy.maxTeamTimeDiff))
-      return ERR_TEAMTIMEDIFF;    
+      return ERR_TEAMTIMEDIFF;
   }
   else if (timeBlue != 0 && (timeRed/timeBlue > strategy.maxTeamTimeDiff || timeBlue/timeRed > strategy.maxTeamTimeDiff))
     return ERR_TEAMTIMEDIFF;
@@ -440,7 +440,7 @@ function extractDataFromGameObject(game) {
       isTeamGame |= p.hasOwnProperty("TEAM");
 
       var pendingSteamAuth = p.STEAM_ID == "0" && (!isTeamGame || p.TEAM != 0);// there are cases in team games where steam_id=0 can appear with team=0 (none). Maybe due to pending steam-auth?
-      botmatch |= p.STEAM_ID == "0" && !pendingSteamAuth; 
+      botmatch |= p.STEAM_ID == "0" && !pendingSteamAuth;
       untrackedPlayers |= !playersBySteamId[p.STEAM_ID] || playersBySteamId[p.STEAM_ID].pid <= 2;
       if (p.WARMUP || botmatch || untrackedPlayers || pendingSteamAuth) // p.ABORTED must be counted for team switchers
         return;
@@ -475,7 +475,7 @@ function extractDataFromGameObject(game) {
         pd.win = true;
       pd.quit |= p.QUIT;
     });
-    
+
     // on 2016-01-14 feeder started to track play times manually to exclude the map load + warmup time from PLAY_TIME
     if (game.playTimes) {
       timeBlue = 0;
@@ -507,11 +507,11 @@ function extractDataFromGameObject(game) {
         // minumum 50% time participation
         continue;
       }
-      
+
       // skip AFK players (except for duel and race)
-      if ("duel,race".indexOf(game.matchStats.GAME_TYPE.toLowerCase()) < 0 && (pd.dg <= 100 || pd.dt / pd.dg >= 10.0)) 
+      if ("duel,race".indexOf(game.matchStats.GAME_TYPE.toLowerCase()) < 0 && (pd.dg <= 100 || pd.dt / pd.dg >= 10.0))
         continue;
-      
+
 
       var p = getOrAddPlayer(null, pd.id, pd.name);
       p.played = true;
@@ -546,7 +546,7 @@ function getOrAddPlayer(playerId, steamId, name, isActive, rating, rd, period, g
       ratingB: g2.makePlayer(ratingB, rdB, periodB)
     };
     player.rating.games = games || 0;
-    player.ratingB.games = gamesB || 0;    
+    player.ratingB.games = gamesB || 0;
   }
   return player;
 }
@@ -657,7 +657,7 @@ function printResults() {
   if (!printResult)
     return playersBySteamId;
 
-  // bring all RD values to today's date  
+  // bring all RD values to today's date
   //var allRatings = Object.keys(playersBySteamId).map(function (key) { return playersBySteamId[key].rating; });
   //g2.setPeriod(glickoPeriod(new Date()), allRatings);
 
